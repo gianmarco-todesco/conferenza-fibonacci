@@ -43,16 +43,17 @@ class SumOfSquaresSlide extends Slide {
         mainGroup.add(fibTextLine.group);
         fibTextLine.group.position.set(-800,-200);
         
-        for(let i=3; i<10; i++) {
+        for(let i=1; i<7; i++) {
             let s = 1
             let ts = ["1²"];
             for(let j=1;j<i;j++) { ts.push('+',`${fibs[j]}²`); s += fibs[j]**2}
             ts.push("=", `${s}`);
-            ts.push("=", `${fibs[i]}*${fibs[i+1]}`);
+            ts.push("=", `${fibs[i-1]}*${fibs[i]}`);
             let sumTextLine = new TextLine(ts, textSytle);
             textLines.push(sumTextLine);
             mainGroup.add(sumTextLine.group);
-            sumTextLine.group.position.set(fibTextLine.group.position.x, (i-2)*60);
+            sumTextLine.group.position.set(
+                fibTextLine.group.position.x, (i-1)*80);
             sumTextLine.texts.forEach(t => t.opacity = 0); 
             let m = sumTextLine.texts.length;
             sumTextLine.texts[m-3].fill = 'orange';

@@ -35,7 +35,7 @@ class SunFlower extends Slide {
         let n = 2000;
         let balls = this.balls = [];
         for(let i=0; i<n; i++) {
-            let ball = two.makeCircle(0,0, 3);
+            let ball = two.makeCircle(0,0, 4);
             ball.fill = `hsl(${360 * i / n}, 100%, 50%)`;
             ball.stroke = 'none';
             ball.linewidth = 1;
@@ -120,7 +120,7 @@ class SunFlower extends Slide {
 
         this.balls.forEach( (b,i) => {
             let phi = i * d;
-            let r = 8 * Math.sqrt(i); // 8
+            let r = 10 * Math.sqrt(i); // 8
             b.position.x = r * Math.cos(phi);
             b.position.y = r * Math.sin(phi);
         })
