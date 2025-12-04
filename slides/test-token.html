@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #667eea;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .failure {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #bee5eb;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Token Authentication System - Test Page</h1>
+    
+    <div class="info">
+        This page tests the token authentication system without requiring the full presentation to load.
+    </div>
+
+    <div class="test-section">
+        <h2>Token Validation Tests</h2>
+        <div id="validation-tests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Storage Tests</h2>
+        <div id="storage-tests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Authentication Tests</h2>
+        <div id="auth-tests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Interactive Tests</h2>
+        <button onclick="testStoreToken()">Store Valid Token</button>
+        <button onclick="testClearToken()">Clear Token</button>
+        <button onclick="testCheckAuth()">Check Authentication</button>
+        <div id="interactive-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Valid Tokens</h2>
+        <p>The following tokens are valid for this presentation:</p>
+        <ul>
+            <li><code>fibonacci-2025</code></li>
+            <li><code>pisa-conference</code></li>
+            <li><code>demo-token</code></li>
+        </ul>
+        <p>Try accessing the main presentation with a token: <a href="index.html?token=demo-token">index.html?token=demo-token</a></p>
+    </div>
+
+    <script type="module">
+        import { 
+            validateToken, 
+            isAuthenticated, 
+            storeToken, 
+            getStoredToken, 
+            clearToken 
+        } from './libs/auth-token.js';
+
+        // Make functions available globally for button onclick
+        window.testStoreToken = function() {
+            storeToken('demo-token');
+            showInteractiveResult('Token "demo-token" stored successfully', true);
+        };
+
+        window.testClearToken = function() {
+            clearToken();
+            showInteractiveResult('Token cleared from storage', true);
+        };
+
+        window.testCheckAuth = function() {
+            const authenticated = isAuthenticated();
+            showInteractiveResult(
+                authenticated ? 'User is authenticated ✓' : 'User is NOT authenticated ✗',
+                authenticated
+            );
+        };
+
+        function showInteractiveResult(message, success) {
+            const div = document.getElementById('interactive-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'test-result ' + (success ? 'success' : 'failure');
+            resultDiv.textContent = message;
+            div.appendChild(resultDiv);
+            setTimeout(() => resultDiv.remove(), 3000);
+        }
+
+        function runTest(name, testFn, expectedResult) {
+            try {
+                const result = testFn();
+                const passed = result === expectedResult;
+                return {
+                    name,
+                    passed,
+                    result,
+                    expected: expectedResult
+                };
+            } catch (error) {
+                return {
+                    name,
+                    passed: false,
+                    error: error.message
+                };
+            }
+        }
+
+        function displayResults(containerId, tests) {
+            const container = document.getElementById(containerId);
+            tests.forEach(test => {
+                const div = document.createElement('div');
+                div.className = 'test-result ' + (test.passed ? 'success' : 'failure');
+                
+                let text = `${test.passed ? '✓' : '✗'} ${test.name}`;
+                if (!test.passed && test.error) {
+                    text += ` - Error: ${test.error}`;
+                } else if (!test.passed) {
+                    text += ` - Expected: ${test.expected}, Got: ${test.result}`;
+                }
+                
+                div.textContent = text;
+                container.appendChild(div);
+            });
+        }
+
+        // Run validation tests
+        const validationTests = [
+            runTest('Valid token: fibonacci-2025', 
+                () => validateToken('fibonacci-2025'), true),
+            runTest('Valid token: pisa-conference', 
+                () => validateToken('pisa-conference'), true),
+            runTest('Valid token: demo-token', 
+                () => validateToken('demo-token'), true),
+            runTest('Invalid token: wrong-token', 
+                () => validateToken('wrong-token'), false),
+            runTest('Invalid token: empty string', 
+                () => validateToken(''), false),
+            runTest('Invalid token: null', 
+                () => validateToken(null), false),
+            runTest('Invalid token: whitespace only', 
+                () => validateToken('   '), false),
+        ];
+        displayResults('validation-tests', validationTests);
+
+        // Run storage tests
+        clearToken(); // Start fresh
+        const storageTests = [
+            runTest('Initial state: no token', 
+                () => getStoredToken() === null, true),
+            runTest('Store valid token', 
+                () => { storeToken('test-token'); return getStoredToken(); }, 'test-token'),
+            runTest('Retrieve stored token', 
+                () => getStoredToken(), 'test-token'),
+            runTest('Clear token', 
+                () => { clearToken(); return getStoredToken() === null; }, true),
+        ];
+        displayResults('storage-tests', storageTests);
+
+        // Run authentication tests
+        clearToken(); // Start fresh
+        const authTests = [
+            runTest('Not authenticated without token', 
+                () => isAuthenticated(), false),
+            runTest('Authenticated with valid stored token', 
+                () => { storeToken('fibonacci-2025'); return isAuthenticated(); }, true),
+            runTest('Not authenticated after clearing', 
+                () => { clearToken(); return isAuthenticated(); }, false),
+        ];
+        displayResults('auth-tests', authTests);
+
+        // Clean up after tests
+        clearToken();
+    </script>
+</body>
+</html>
