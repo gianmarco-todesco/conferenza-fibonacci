@@ -1,6 +1,8 @@
 
 "use strict";
 
+import { requireAuth } from './auth-token.js';
+
 let slides = [];
 let slideIndex = -1;
 let slide; 
@@ -50,6 +52,9 @@ function resizeContainer() {
 }
 
 document.addEventListener("DOMContentLoaded", async function() {
+    
+    // Check authentication before initializing presentation
+    requireAuth();
     
     let firstSlideIndex = 0;
     let hpage = window.location.hash.slice(1);
