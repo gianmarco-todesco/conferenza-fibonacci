@@ -82,6 +82,8 @@ function isAuthenticated() {
     if (urlToken && validateToken(urlToken)) {
         storeToken(urlToken);
         // Clean URL by removing token parameter
+        // Note: Token may still appear in browser history and server logs.
+        // For production use, consider using POST requests or other secure methods.
         const url = new URL(window.location);
         url.searchParams.delete('token');
         window.history.replaceState({}, '', url);
@@ -93,6 +95,8 @@ function isAuthenticated() {
 
 /**
  * Prompts user for token and validates it
+ * Note: Uses browser prompt() which displays token in plain text.
+ * For production use, consider implementing a custom modal with password input.
  * @returns {boolean} - True if successfully authenticated
  */
 function promptForToken() {

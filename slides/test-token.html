@@ -121,6 +121,9 @@
             clearToken 
         } from './libs/auth-token.js';
 
+        // Configuration
+        const RESULT_DISPLAY_DURATION = 3000; // milliseconds
+
         // Make functions available globally for button onclick
         window.testStoreToken = function() {
             storeToken('demo-token');
@@ -146,7 +149,7 @@
             resultDiv.className = 'test-result ' + (success ? 'success' : 'failure');
             resultDiv.textContent = message;
             div.appendChild(resultDiv);
-            setTimeout(() => resultDiv.remove(), 3000);
+            setTimeout(() => resultDiv.remove(), RESULT_DISPLAY_DURATION);
         }
 
         function runTest(name, testFn, expectedResult) {
