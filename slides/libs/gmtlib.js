@@ -49,6 +49,31 @@ function resizeContainer() {
       `translate(-50%, -50%) scale(${scale})`;
 }
 
+// I font vanno attesi esplicitamente. DOMContentLoaded non basta: dice solo
+// che l'HTML e' stato letto, e a quel punto il browser di solito non ha
+// nemmeno richiesto il webfont, perche' lo scarica quando deve disegnare
+// qualcosa che lo usa. Nemmeno 'load' li garantisce. L'unico appiglio e'
+// l'API Font Loading.
+//
+// Serve perche' le slide si impaginano misurando i testi: col font sbagliato
+// le misure sono quelle del ripiego e le posizioni nascono storte.
+async function loadFonts(family, specs) {
+    if(!document.fonts) return false;
+    try {
+        await Promise.all(specs.map(s => document.fonts.load(s)));
+        await document.fonts.ready;
+    } catch(e) {
+        console.warn('Font non caricato:', e);
+    }
+
+    // Se il file manca o cambia nome il ripiego e' silenzioso, e in sala si
+    // vedrebbero i quadratini al posto dei segni sanscriti.
+    const attivo = document.fonts.check('bold 150px "' + family + '"', 'Piṅgala');
+    window.__fontStatus = {famiglia: family, attivo: attivo};
+    if(!attivo) console.warn('Font "' + family + '" non attivo: si usa il ripiego.');
+    return attivo;
+}
+
 document.addEventListener("DOMContentLoaded", async function() {
     
     let firstSlideIndex = 0;
@@ -77,6 +102,12 @@ document.addEventListener("DOMContentLoaded", async function() {
     center = window.center = { x: BASE_WIDTH / 2,  y: BASE_HEIGHT / 2};
     
     gsap.ticker.add(two.update.bind(two))
+
+    // Le slide si impaginano misurando i testi con getBoundingClientRect: se
+    // il font non e' ancora pronto le misure sono quelle del ripiego e le
+    // posizioni nascono sbagliate. Quindi si aspetta, e se qualcosa va storto
+    // si prosegue lo stesso invece di lasciare lo schermo nero.
+    await loadFonts('Noto Sans', ['bold 150px "Noto Sans"', '150px "Noto Sans"']);
 
     slides.forEach(slide => slide.initialize());
     await setSlide(firstSlideIndex);

@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fibonacci: numeri fantastici e dove trovarli</title>
     <style>
+        /* Font locale: serve per i segni IAST della traslitterazione dal
+           sanscrito (Pingala, Chandahshastra...), che Arial non ha. I file
+           stanno in assets/fonts, quindi funziona anche senza rete. */
+        @font-face {
+            font-family: 'Noto Sans';
+            src: url('assets/fonts/NotoSans-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: block;
+        }
+        @font-face {
+            font-family: 'Noto Sans';
+            src: url('assets/fonts/NotoSans-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+            font-display: block;
+        }
+
         html, body {
             margin: 0;
             padding: 0;
@@ -34,29 +52,48 @@
     <script src="libs/two.min.js"></script>
     <script src="libs/ngraph.graph.min.js"></script>
     <script src="libs/ngraph.forcelayout.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css" integrity="sha384-WcoG4HRXMzYzfCgiyfrySxx90XSl2rxY5mnVY5TwtWE6KLrArNKn0T/mOgNL0Mmi" crossorigin="anonymous">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.js" integrity="sha384-J+9dG2KMoiR9hqcFao0IBLwxt6zpcyN68IgwzsCSkbreXUjmNVRhPFTssqdSGjwQ" crossorigin="anonymous"></script>
+    <!-- KaTeX 0.16.25 in locale (era su CDN): in sala la rete puo' non
+         esserci, e senza queste due righe le slide con le formule le
+         perderebbero. I 60 font stanno in libs/katex/fonts. -->
+    <link rel="stylesheet" href="libs/katex/katex.min.css">
+    <script defer src="libs/katex/katex.min.js"></script>
 
+    <script src="pages/title/sequence.js" type="module"></script>
+    <script src="pages/title/pingala.js" type="module"></script>
+    <script src="pages/tiling/tiling.js" type="module"></script>
+    
+    <script src="pages/rabbits/rabbits.js" type="module"></script>
+    <script src="pages/golden-ratio/golden-ratio.js" type="module"></script>
+    
+    <!-- qui ci potrebbe andare la slide con binet -->
 
+    <script src="pages/art/art.js" type="module"></script>
+    <script src="pages/identities/fibonacci-sum.js" type="module"></script>
+    <script src="pages/identities/fibonacci-sum-tiling.js" type="module"></script>
+    <script src="pages/identities/sum-of-two-squares.js" type="module"></script>
+    <script src="pages/identities/sum-of-two-squares-tiling.js" type="module"></script>
+    <script src="pages/identities/sum-of-squares.js" type="module"></script>
+    <script src="pages/spiral/spiral.js" type="module"></script>
+    <script src="pages/gcd/gcdintro.js" type="module"></script>
+    <script src="pages/gcd/gcd.js" type="module"></script>
+    <script src="pages/gcd/slowgcd.js" type="module"></script>
+    <script src="pages/mandelbrot/mandelbrot.js" type="module"></script>
+    
     <!--script src="pages/dummy/dummy1.js" type="module"></script-->
+    <!--
+    
     <script src="pages/title/title.js" type="module"></script>
     <script src="pages/title/sequence.js" type="module"></script>
     <script src="pages/rabbits/rabbits.js" type="module"></script>
     <script src="pages/golden-ratio/golden-ratio.js" type="module"></script>
     <script src="pages/art/art.js" type="module"></script>
-    <script src="pages/tiling/tiling.js" type="module"></script>
-    <script src="pages/gcd/gcdintro.js" type="module"></script>
-    <script src="pages/gcd/gcd.js" type="module"></script>
-    <script src="pages/gcd/slowgcd.js" type="module"></script>
     <script src="pages/mandelbrot/mandelbrot.js" type="module"></script>
-    <script src="pages/identities/fibonacci-sum.js" type="module"></script>
-    <script src="pages/identities/sum-of-two-squares.js" type="module"></script>
-    <script src="pages/identities/sum-of-squares.js" type="module"></script>
-    <script src="pages/spiral/spiral.js" type="module"></script>
     <script src="pages/sunflower/plants.js" type="module"></script>
     <script src="pages/sunflower/sunflower1.js" type="module"></script>
     <script src="pages/sunflower/sunflower2.js" type="module"></script>
     <script src="pages/sunflower/sunflower3.js" type="module"></script>
+    -->
+
 </head>
 <body>    
     <div id="container"></div>
