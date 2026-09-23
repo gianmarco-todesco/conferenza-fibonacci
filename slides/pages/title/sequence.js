@@ -25,10 +25,10 @@ const LAST_ACT = 4;
 //   1.50  svanisce il +
 //   1.75  svanisce l'=, e il numero nuovo da blu passa ad azzurro
 //   poi PAUSA, e si ricomincia
-const BATTUTA    = 0.5;    // distanza fra un evento e il successivo
-const FADE       = 0.3;    // durata di una comparsa o scomparsa (< BATTUTA)
-const SFASAMENTO = 0.25;   // ritardo dell'= rispetto al + nell'uscita
-const PAUSA      = 1.0;    // respiro fra un passo e l'altro
+const BATTUTA    = 0.25;    // distanza fra un evento e il successivo
+const FADE       = 0.1;    // durata di una comparsa o scomparsa (< BATTUTA)
+const SFASAMENTO = 0.1;   // ritardo dell'= rispetto al + nell'uscita
+const PAUSA      = 0.25;    // respiro fra un passo e l'altro
 
 const COL_NORMALE = '#5bdff5';   // azzurro: i numeri della successione
 const COL_ATTIVO  = '#0000ff';   // blu: il +, l'= e il numero appena nato

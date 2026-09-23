@@ -81,6 +81,13 @@ class TwoSquaresSumSlide extends Slide {
             this.hlRects.push(rect);
             rect.visible = false;
         }
+        let circle = two.makeCircle(0,0,40);
+        circle.fill = 'none';
+        circle.stroke = 'orange';
+        circle.linewidth = 4;
+        circle.visible = false;
+        this.mainGroup.add(circle);
+        this.circle = circle;
         this.index = -1;
     }
     cleanup() {
@@ -106,6 +113,15 @@ class TwoSquaresSumSlide extends Slide {
         rect.height = y1 - y0 + 20;
         rect.visible = true;
     } 
+    setCircle(circle, textLine, i) {
+        let offx = textLine.group.position.x;
+        let offy = textLine.group.position.y;
+        let x = offx + textLine.texts[i].position.x;
+        let y = offy + textLine.texts[i].position.y;
+        circle.position.set(x, y);
+        circle.radius = i < 6 ? 40 : 60;
+        circle.visible = true;
+    }
 
     selectSum(i) {
         let textLine = this.textLines[i+1];
@@ -113,8 +129,10 @@ class TwoSquaresSumSlide extends Slide {
         textLine = this.textLines[0];
         this.setHlRect(this.hlRects[1], textLine, i, i);
         this.setHlRect(this.hlRects[2], textLine, i+1, i+1);
+        // this.setCircle(this.circle, textLine, i+1);
         let k = i*2+1;
-        this.setHlRect(this.hlRects[3], textLine, k+1, k+1);        
+        // this.setHlRect(this.hlRects[3], textLine, k+1, k+1);    
+        this.setCircle(this.circle, textLine, k+1);    
     }
 
     nextAct() {

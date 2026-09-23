@@ -74,16 +74,38 @@ async function loadFonts(family, specs) {
     return attivo;
 }
 
+// Legge il numero di slide dall'hash, oppure -1 se non c'e' o non e' un
+// indice valido. Con hpage|0 un "#pippo" diventava 0, cioe' mandava alla
+// prima slide invece di essere ignorato.
+function indiceDaHash() {
+    const h = window.location.hash.slice(1);
+    if(h === '') return -1;
+    const j = parseInt(h, 10);
+    if(!Number.isInteger(j) || j < 0 || j >= slides.length) return -1;
+    return j;
+}
+
+// Cambiando il numero dopo l'hash nella barra degli indirizzi si va subito
+// alla slide, senza ricaricare. Funzionano cosi' anche i tasti avanti e
+// indietro del browser.
+//
+// La guardia su slideIndex e' necessaria: setSlide riscrive l'hash quando ha
+// finito, e quella riscrittura fa scattare un secondo hashchange. Senza, ogni
+// cambio di slide rientrerebbe qui una volta di troppo.
+window.addEventListener('hashchange', () => {
+    const j = indiceDaHash();
+    if(j >= 0 && j !== slideIndex) setSlide(j);
+});
+
 document.addEventListener("DOMContentLoaded", async function() {
-    
+
     let firstSlideIndex = 0;
-    let hpage = window.location.hash.slice(1);
-    if(hpage != '') {
-        let j = hpage|0;
-        if(0<=j && j<slides.length) {
-            firstSlideIndex = j;
-        }
-    }
+    let j = indiceDaHash();
+    if(j >= 0) firstSlideIndex = j;
+    console.log(window.location);
+    console.log(window.location.hash);
+    console.log("firstSlideIndex:", firstSlideIndex);
+    
 
     gsap.registerPlugin(TextPlugin) 
     gsap.registerPlugin(SplitText) 

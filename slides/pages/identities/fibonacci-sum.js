@@ -164,11 +164,14 @@ class FibonacciSumSlide extends Slide {
         this.tiles = [];
         this.fooRects = [];
         this._state = 0;
+        this._act = 0;
         // textLines.forEach(textLine => { textLine.texts.forEach(t => t.opacity=1); });
     }
     cleanup() {
         this.mainGroup.remove();
         this.div.remove();
+        this._act = 0;
+        
     }
 
     setHighlightingRect(rect, textLine, m) {
@@ -200,7 +203,7 @@ class FibonacciSumSlide extends Slide {
     }
 
     
-
+    // obsolete: see next slide
     foo(n) {
         let tl = gsap.timeline();
         let keptLine = null;
@@ -257,6 +260,7 @@ class FibonacciSumSlide extends Slide {
         }
     }
 
+    // obsolete: see next slide
     foo2() {
         if(this.fooRects.length == 0) return;
         let tl = gsap.timeline();
@@ -264,7 +268,23 @@ class FibonacciSumSlide extends Slide {
     }
 
 
+    nextAct() { 
+        if(this._act < 7)
+        {
+            this._act++;
+            this.selectSum(this._act+2);
+        }
+    }
+    prevAct() { 
+        if(this._act > 0)
+        {
+            this._act--;
+            this.selectSum(this._act+2);
+        }
+
+    } 
     onKeyDown(event) {
+        console.log(event);
         if('1'<=event.key && event.key <= '9') {
             this.selectSum(parseInt(event.key)+2);
         } else if(event.key === '0') {

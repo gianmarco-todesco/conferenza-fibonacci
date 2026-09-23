@@ -12,13 +12,29 @@ import {Slide, two, center} from '../../libs/gmtlib.js';
 //   <- / ->    tappa precedente / successiva
 //   a  assi        t  punti di tangenza        b  cerchi dei bulbi
 //   n  antenne     r  vista iniziale
-//   c  stampa in console la coordinata sotto il puntatore
-//      (serve per raccogliere le punte delle antenne: vedi TAPPE)
+//   c  stampa in console la coordinata sotto il puntatore, come PUNTA
+//   C  la stessa coordinata, come CENTRO di diramazione
+//      (servono per riempire TAPPE: vedi il commento li')
 
 const W = 1920, H = 1080;
 const RISOLUZIONE = 1;      // abbassa a 0.75 se la GPU arranca
 
 const VISTA_INIZIALE = {cx: -0.65, cy: 0, larghezza: 3.2};
+
+// A che distanza in pixel dal punto di tangenza, verso l'interno del
+// cardioide, si scrive la frazione p/q.
+const ETICHETTA_PX = 44;
+
+// Sotto questa estensione in pixel l'antenna non si disegna: i numeri si
+// sovrapporrebbero invece di aiutare a contare.
+const ANTENNA_MIN_PX = 90;
+
+// I pallini numerati sulle punte. Vanno letti dal fondo della sala, quindi
+// sono grossi; il corpo del numero segue il raggio, altrimenti un "13" non
+// ci sta dentro.
+const ANTENNA_R      = 50;
+const ANTENNA_TESTO  = 64;
+const ANTENNA_TRATTO = 3;
 
 // ---------------------------------------------------------------------
 // Geometria dei bulbi.
@@ -46,19 +62,64 @@ function normaleUscente(t) {
     return {re: ty/n, im: -tx/n};                  // -i * (tx + i ty)
 }
 
-// Raggio del bulbo p/q: la forma precisa di "la grandezza va come 1/q^2".
-// Per 1/2 da' esattamente 1/4, che e' il raggio vero del disco di periodo 2
-// centrato in -1; per 1/3 da' un centro a -0.125+0.746i contro il valore
-// noto -0.1226+0.7449i.
-function raggioBulbo(p, q) {
+// Stima asintotica del raggio: la forma precisa di "la grandezza va come
+// 1/q^2". Serve solo come punto di partenza per Newton qui sotto, perche' e'
+// esatta solo per q = 2 e per q = 3 sbaglia gia' dell'1%.
+function raggioStimato(p, q) {
     return Math.sin(Math.PI*p/q) / (q*q);
 }
 
-function centroBulbo(p, q) {
+function centroStimato(p, q) {
     const t = puntoCardioide(p/q);
     const n = normaleUscente(p/q);
-    const r = raggioBulbo(p, q);
+    const r = raggioStimato(p, q);
     return {re: t.re + r*n.re, im: t.im + r*n.im};
+}
+
+// Il centro VERO del bulbo p/q e' il parametro in cui il ciclo di periodo q
+// e' superattrattivo, cioe' lo zero di F_q(c): z_0 = 0, z_{k+1} = z_k^2 + c,
+// F_q(c) = z_q. Non ha forma chiusa, ma Newton lo trova in poche iterazioni
+// partendo dalla stima asintotica; la derivata rispetto a c si propaga
+// insieme all'orbita con d_{k+1} = 2 z_k d_k + 1.
+//
+// Serve perche' i cerchi disegnati con la sola stima risultavano un filo
+// piccoli e spostati: l'errore dell'1% sul raggio si somma a quello sulla
+// posizione del centro, che sta a distanza r lungo la normale.
+function centroEsatto(p, q) {
+    const stima = centroStimato(p, q);
+    let cr = stima.re, ci = stima.im;
+    for(let it = 0; it < 80; it++) {
+        let zr = 0, zi = 0, dr = 0, di = 0;
+        for(let k = 0; k < q; k++) {
+            const ndr = 2*(zr*dr - zi*di) + 1;
+            const ndi = 2*(zr*di + zi*dr);
+            const nzr = zr*zr - zi*zi + cr;
+            const nzi = 2*zr*zi + ci;
+            zr = nzr; zi = nzi; dr = ndr; di = ndi;
+        }
+        const den = dr*dr + di*di;
+        if(!(den > 0)) break;
+        const sr = (zr*dr + zi*di) / den;
+        const si = (zi*dr - zr*di) / den;
+        cr -= sr; ci -= si;
+        if(Math.hypot(sr, si) < 1e-15) break;
+    }
+    // Se Newton e' scappato su un altro centro di periodo q (ce ne sono
+    // molti), si torna alla stima invece di disegnare un cerchio assurdo.
+    const fuga = Math.hypot(cr - stima.re, ci - stima.im);
+    if(!isFinite(cr) || !isFinite(ci) || fuga > 0.5*raggioStimato(p, q))
+        return stima;
+    return {re: cr, im: ci};
+}
+
+// Il bulbo e' tangente al cardioide nella radice, quindi il raggio e' la
+// distanza fra centro e radice. Per 1/2 viene esattamente 0,25.
+function geometriaBulbo(p, q) {
+    const tangenza = puntoCardioide(p/q);
+    const normale = normaleUscente(p/q);
+    const centro = centroEsatto(p, q);
+    const raggio = Math.hypot(centro.re - tangenza.re, centro.im - tangenza.im);
+    return {p, q, tangenza, normale, centro, raggio};
 }
 
 // ---------------------------------------------------------------------
@@ -66,17 +127,56 @@ function centroBulbo(p, q) {
 // dal vivo si preme un tasto e si atterra, non si cerca col mouse davanti a
 // duecento persone. E' il cammino di Fibonacci: 1/2, 1/3, 2/5, 3/8, 5/13.
 //
-// 'punte' e' l'aiuto per contare le antenne: le coordinate delle q punte,
-// raccolte una volta guardando lo schermo col tasto 'c'. Sono da riempire a
-// mano perche' il punto di diramazione dell'antenna NON ha una formula
-// chiusa: piazzarle a occhio da' posizioni esatte, una formula le darebbe
-// approssimate. Vuote = nessun numero disegnato.
+// L'aiuto per contare le antenne si raccoglie a mano, perche' ne' il punto di
+// diramazione ne' le punte hanno una formula chiusa: piazzarli a occhio da'
+// posizioni esatte, una formula le darebbe approssimate.
+//
+//   'centro'  il punto di diramazione, da cui partono i raggi.   Tasto C
+//   'punte'   le q punte, nell'ordine in cui vanno numerate.      Tasto c
+//
+// Senza 'centro' i raggi partono dal baricentro delle punte, che per il 5/13
+// cade una sessantina di pixel fuori dal centro vero della stella: il
+// baricentro e' un ripiego, non la stessa cosa.
+// Senza 'punte' non si disegna niente.
 const TAPPE = [
-    {p: 1, q: 2,  larghezza: 3.2,   tuttoInsieme: true, punte: []},
-    {p: 1, q: 3,  larghezza: 0.80,  punte: []},
-    {p: 2, q: 5,  larghezza: 0.34,  punte: []},
-    {p: 3, q: 8,  larghezza: 0.14,  punte: []},
-    {p: 5, q: 13, larghezza: 0.055, punte: []},
+    {p: 1, q: 2,  larghezza: 3.2,   tuttoInsieme: true, centro: null, punte: []},
+    {p: 1, q: 3,  larghezza: 0.80,  centro: [-0.10156363, 0.95642902], punte: [
+        [-0.10575541, 0.92457140],
+        [-0.07431695, 0.97068112],
+        [-0.12922946, 0.98954418]
+    ]},
+    {p: 2, q: 5,  larghezza: 0.34,  centro: [-0.56228042, 0.64283540], punte: [
+        [-0.55078970, 0.62655689],
+        [-0.57664381, 0.63325980],
+        [-0.57792056, 0.65145344],
+        [-0.56345673, 0.65630854],
+        [-0.54340280, 0.65491591]
+    ]},
+    {p: 3, q: 8,  larghezza: 0.14,  centro: [-0.37399316, 0.65979218], punte: [
+        [-0.37205941, 0.65386893],
+        [-0.36756485, 0.65836350],
+        [-0.36859485, 0.66304534],
+        [-0.37224669, 0.66557353],
+        [-0.37589852, 0.66604171],
+        [-0.38076763, 0.66491807],
+        [-0.38254673, 0.65958078],
+        [-0.37945671, 0.65311984]
+    ]},
+    {p: 5, q: 13, larghezza: 0.055, centro: [-0.41705772, 0.60292471], punte: [
+        [-0.41538393, 0.59950871],
+        [-0.41827308, 0.59887006],
+        [-0.42000657, 0.60045149],
+        [-0.42085811, 0.60200251],
+        [-0.42043234, 0.60358394],
+        [-0.41964162, 0.60464836],
+        [-0.41879008, 0.60546949],
+        [-0.41769525, 0.60613855],
+        [-0.41669165, 0.60583443],
+        [-0.41568805, 0.60546949],
+        [-0.41441074, 0.60501331],
+        [-0.41368084, 0.60373600],
+        [-0.41328549, 0.60145509],
+    ]},
 ];
 
 // I bulbi di cui disegnare tangenza e cerchio quando gli overlay sono accesi.
@@ -280,19 +380,31 @@ class MandelbrotSlide extends Slide {
                 size: 26, family: 'Noto Sans', weight: 'bold', fill: '#ffd24d'});
             this.gBulbi.add(etichetta);
 
-            return {p, q, punto, cerchio, etichetta};
+            // tangenza, normale, centro e raggio si calcolano una volta sola:
+            // il centro esatto costa un Newton e non va rifatto a ogni frame.
+            return Object.assign(geometriaBulbo(p, q), {punto, cerchio, etichetta});
         });
 
-        // conteggio delle antenne: un pallino numerato per punta
-        this.numeriAntenna = [];
+        // Conteggio delle antenne: una linea dal centro di diramazione a ogni
+        // punta, col numero in fondo. La linea segue il raggio vero, quindi
+        // l'occhio lo puo' percorrere anche quando e' sottile e sbiadito -
+        // che e' il caso dei bulbi con q grande, cioe' quelli che contano.
+        this.raggiAntenna = [];
         for(let i = 0; i < 40; i++) {
-            const c = two.makeCircle(0, 0, 17);
-            c.fill = 'rgba(0,0,0,0.6)'; c.stroke = 'white'; c.linewidth = 2;
+            const linea = two.makeLine(0, 0, 0, 0);
+            linea.stroke = 'rgba(255,255,255,0.75)';
+            linea.linewidth = ANTENNA_TRATTO;
+            const c = two.makeCircle(0, 0, ANTENNA_R);
+            c.fill = 'rgba(0,0,0,0.6)';
+            c.stroke = 'white';
+            c.linewidth = ANTENNA_TRATTO;
             const t = two.makeText('', 0, 0, {
-                size: 22, family: 'Noto Sans', weight: 'bold', fill: 'white'});
+                size: ANTENNA_TESTO, family: 'Noto Sans',
+                weight: 'bold', fill: 'white'});
+            this.gAntenne.add(linea);
             this.gAntenne.add(c);
             this.gAntenne.add(t);
-            this.numeriAntenna.push({c, t});
+            this.raggiAntenna.push({linea, c, t});
         }
     }
 
@@ -332,37 +444,95 @@ class MandelbrotSlide extends Slide {
     aggiornaBulbi() {
         const s = this.scala;
         this.marchi.forEach(m => {
-            const t = puntoCardioide(m.p / m.q);
-            const pt = this.aSchermo(t.re, t.im);
+            const pt = this.aSchermo(m.tangenza.re, m.tangenza.im);
             m.punto.position.set(pt.x, pt.y);
             m.punto.visible = Math.abs(pt.x) < W/2 && Math.abs(pt.y) < H/2;
 
-            const cb = centroBulbo(m.p, m.q);
-            const pc = this.aSchermo(cb.re, cb.im);
-            const r = raggioBulbo(m.p, m.q) / s;
+            const pc = this.aSchermo(m.centro.re, m.centro.im);
+            const r = m.raggio / s;
             m.cerchio.position.set(pc.x, pc.y);
             m.cerchio.radius = r;
-            m.etichetta.position.set(pc.x, pc.y - r - 22);
+
+            // L'etichetta va DENTRO il cardioide, a distanza fissa in pixel
+            // dal punto di tangenza. Sopra il bulbo finiva spesso fuori
+            // schermo o sopra un altro bulbo; qui il fondo e' nero e vuoto,
+            // e la frazione resta leggibile a qualunque zoom.
+            const d = ETICHETTA_PX * s;
+            const pl = this.aSchermo(m.tangenza.re - m.normale.re*d,
+                                     m.tangenza.im - m.normale.im*d);
+            m.etichetta.position.set(pl.x, pl.y);
 
             const dentro = Math.abs(pc.x) < W/2 + r && Math.abs(pc.y) < H/2 + r;
             m.cerchio.visible = dentro && r > 4;
-            m.etichetta.visible = dentro && r > 26;
+            m.etichetta.visible = r > 16 &&
+                Math.abs(pl.x) < W/2 - 30 && Math.abs(pl.y) < H/2 - 20;
         });
     }
 
+    // Si disegnano le antenne di TUTTE le tappe che cadono nella vista, non
+    // solo quelle della tappa corrente: 'this.tappa' cambia soltanto con le
+    // frecce, quindi arrivando su un bulbo con il mouse non compariva niente.
     aggiornaAntenne() {
-        const punte = (TAPPE[this.tappa] && TAPPE[this.tappa].punte) || [];
-        this.numeriAntenna.forEach((n, i) => {
-            if(i < punte.length) {
-                const p = this.aSchermo(punte[i][0], punte[i][1]);
-                n.c.position.set(p.x, p.y);
-                n.t.position.set(p.x, p.y);
-                n.t.value = String(i + 1);
-                n.c.visible = n.t.visible = true;
-            } else {
-                n.c.visible = n.t.visible = false;
-            }
+        let k = 0;
+        TAPPE.forEach(t => {
+            const punte = t.punte || [];
+            if(punte.length === 0) return;
+
+            // Il centro di diramazione: quello dichiarato, oppure il
+            // baricentro delle punte, che per una stella di raggi ci casca
+            // vicino ed evita di doverlo raccogliere a mano.
+            const c = t.centro || [
+                punte.reduce((a, p) => a + p[0], 0) / punte.length,
+                punte.reduce((a, p) => a + p[1], 0) / punte.length];
+            const pc = this.aSchermo(c[0], c[1]);
+            if(Math.abs(pc.x) > 0.55*W || Math.abs(pc.y) > 0.55*H) return;
+
+            // E anche abbastanza grande da poterci contare sopra: a uno zoom
+            // largo l'antenna del 5/13 sta dentro l'inquadratura ma e' larga
+            // nove pixel, e tredici pallini numerati diventerebbero una
+            // macchia.
+            let raggioSchermo = 0;
+            punte.forEach(pp => {
+                const p = this.aSchermo(pp[0], pp[1]);
+                raggioSchermo = Math.max(raggioSchermo,
+                    Math.hypot(p.x - pc.x, p.y - pc.y));
+            });
+            if(raggioSchermo < ANTENNA_MIN_PX) return;
+
+            // I pallini crescono FINO a ANTENNA_R, ma non oltre meta' della
+            // distanza fra le due punte piu' vicine, altrimenti si
+            // accavallano. Quella distanza va MISURATA, non stimata come
+            // 2*pi*R/q: la formula suppone le punte distribuite su un giro
+            // intero, mentre nei bulbi veri stanno raggruppate da una parte,
+            // e dava un valore troppo ottimista.
+            const schermo = punte.map(pp => this.aSchermo(pp[0], pp[1]));
+            let minD = Infinity;
+            for(let i = 0; i < schermo.length; i++)
+                for(let j = i + 1; j < schermo.length; j++)
+                    minD = Math.min(minD, Math.hypot(
+                        schermo[i].x - schermo[j].x,
+                        schermo[i].y - schermo[j].y));
+            const rp = isFinite(minD) ? Math.min(ANTENNA_R, 0.46*minD) : ANTENNA_R;
+            const corpo = Math.round(rp * ANTENNA_TESTO / ANTENNA_R);
+
+            punte.forEach((pp, i) => {
+                if(k >= this.raggiAntenna.length) return;
+                const p = schermo[i];
+                const r = this.raggiAntenna[k++];
+                r.linea.vertices[0].set(pc.x, pc.y);
+                r.linea.vertices[1].set(p.x, p.y);
+                r.c.position.set(p.x, p.y);
+                r.c.radius = rp;
+                r.t.position.set(p.x, p.y);
+                r.t.size = corpo;
+                r.t.value = String(i + 1);
+                r.linea.visible = r.c.visible = r.t.visible = true;
+            });
         });
+        for(; k < this.raggiAntenna.length; k++) {
+            const r = this.raggiAntenna[k];
+            r.linea.visible = r.c.visible = r.t.visible = false;
+        }
     }
 
     aggiorna() {
@@ -415,7 +585,7 @@ class MandelbrotSlide extends Slide {
         const t = TAPPE[i];
         const c = t.tuttoInsieme
             ? {re: VISTA_INIZIALE.cx, im: VISTA_INIZIALE.cy}
-            : centroBulbo(t.p, t.q);
+            : centroEsatto(t.p, t.q);
         if(this.volo) this.volo.kill();
         this.volo = gsap.to(this.vista, {
             duration: 1.2, ease: 'power2.inOut',
@@ -438,11 +608,13 @@ class MandelbrotSlide extends Slide {
             this.vista = Object.assign({}, VISTA_INIZIALE);
             this.tappa = 0;
             this.aggiorna();
-        } else if(k === 'c' && this.ultimoPuntatore) {
-            // strumento di lavoro: raccoglie le coordinate per TAPPE.punte
+        } else if((k === 'c' || k === 'C') && this.ultimoPuntatore) {
+            // Strumenti di lavoro per riempire TAPPE: stampano la riga gia'
+            // formattata da incollare. 'c' una punta, 'C' il centro.
             const v = this.inCoordinateVista(this.ultimoPuntatore.x, this.ultimoPuntatore.y);
             const c = this.aComplesso(v.x, v.y);
-            console.log(`[${c.re.toFixed(8)}, ${c.im.toFixed(8)}],`);
+            const coppia = `[${c.re.toFixed(8)}, ${c.im.toFixed(8)}]`;
+            console.log(k === 'C' ? `centro: ${coppia},` : `${coppia},`);
         }
     }
 

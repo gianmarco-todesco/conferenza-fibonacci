@@ -204,12 +204,13 @@ class TilingSlide extends Slide {
     }
 
     act2() {
+        console.log("act2", this.mainBoard.visible, this.count);
         if( this.mainBoard.visible) {
             this.mainBoard.visible = false;
+            this.count = 1;
             return;
         }
-        if(this.count==0) this.count = 1;
-        else if(this.count >= 8) {
+        if(this.count >= 8) {
             this.highlightRectangles();
         } else {
             let n = this.count;
