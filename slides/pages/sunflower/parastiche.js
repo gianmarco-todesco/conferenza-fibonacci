@@ -69,12 +69,38 @@ const PASSI = 160;
 const COL_CERCHIO  = '#ffffff';
 const COL_MANIGLIA = '#ffe14d';
 
+// Regia. La prima famiglia entra un braccio per volta, al ritmo di chi conta
+// ad alta voce; la seconda tutta insieme in dissolvenza, perche' li' il numero
+// non si conta piu', si guarda.
+const T_BRACCIO   = 0.22;   // secondi fra un braccio e il successivo
+const T_ENTRATA   = 0.15;   // quanto ci mette un braccio a comparire
+const T_FADE      = 1.30;   // dissolvenza della seconda famiglia
+const T_PAUSA     = 0.70;   // dopo l'ultimo numero, prima di togliere i pallini
+const T_VIA_NUMERI = 0.90;
+const NUMERO_R    = 24;     // raggio del pallino in fondo all'arco
+const NUMERO_FUORI = 22;    // di quanto sta oltre la fine dell'arco, in px foto
+
 // Una famiglia = una forma condivisa + gli angoli delle maniglie.
 // controlli.int / controlli.est: un angolo (radianti) per maniglia. Vuoti =
 // "mettile equispaziate". Il tasto c stampa questo blocco gia' formattato.
 const FAMIGLIE = [
     {
         nome: 'rossa',
+        colore: '#ff3b3b',
+        m: 34,
+        mu: 15.6878, sd: 2.0212,
+        passo: -12, fase: -0.8762,
+        rInt: 180, rEst: 300,
+        rMin: 110, rMax: 350,
+        controlli: {n: 12,
+            // bracci [0,3,6,9,11,14,17,20,23,26,28,31]
+            int: [-0.37086, 0.26765, 0.71060, 1.21599, 1.57825, 2.05957, 2.77073, -2.90355, -2.28760, -1.74823, -1.38014, -0.90606],
+            est: [0.31087, 0.74529, 1.32651, 1.82349, 2.18502, 2.82955, -2.78393, -2.23354, -1.66785, 5.11566, -0.83079, -0.20426]
+        }
+    },
+    /*
+    {
+        nome: 'rossa-old',
         m: 34,
         colore: '#ff3b3b',
         // forma: theta(r) = (2*pi*L - fase)/m - passo*u(r)/m,  u(r) = (sqrt(r)-mu)/sd
@@ -83,9 +109,9 @@ const FAMIGLIE = [
         rInt: 180, rEst: 300,
         rMin: 110, rMax: 350,
         controlli: {n: 8, int: [], est: []},
-    },
-    {
-        nome: 'blu',
+    },*/
+    /*{
+        nome: 'blu-old',
         m: 55,
         colore: '#3bb0ff',
         mu: 15.6878, sd: 2.0212,
@@ -93,7 +119,21 @@ const FAMIGLIE = [
         rInt: 180, rEst: 300,
         rMin: 110, rMax: 350,
         controlli: {n: 8, int: [], est: []},
-    },
+    },*/
+    {
+        nome: 'blu',
+        m: 55,
+        colore: '#3bb0ff',
+        mu: 15.6878, sd: 2.0212,
+        passo: 9, fase: -2.7222,
+        rInt: 180, rEst: 300,
+        rMin: 110, rMax: 350,
+        controlli: {n: 10,
+            // bracci [0,6,11,17,22,28,33,39,44,50]
+            int: [0.20840, 0.91882, 1.40940, 2.01040, 2.66993, 3.43210, 4.00330, 4.68874, -1.13381, -0.39781],
+            est: [-0.09037, 0.57924, 1.12431, 1.81164, 2.38039, 3.08560, -2.62497, 4.37266, -1.35421, -0.67471]
+        },
+    }
 ];
 
 const DUEPI = 2 * Math.PI;
@@ -127,6 +167,8 @@ class ParasticheSlide extends Slide {
 
         this.gruppoOverlay = two.makeGroup();
         this.mainGroup.add(this.gruppoOverlay);
+        this.gruppoNumeri = two.makeGroup();
+        this.mainGroup.add(this.gruppoNumeri);
         this.gruppoChrome = two.makeGroup();
         this.mainGroup.add(this.gruppoChrome);
         this.gruppoTesti = two.makeGroup();
@@ -197,18 +239,23 @@ class ParasticheSlide extends Slide {
         return out;
     }
 
-    braccio(f, L, sInt, sEst) {
+    // Un punto del braccio L al raggio r, corretto con gli scarti.
+    puntoBraccio(f, L, r, sInt, sEst) {
         const u1 = this.u(f, f.rInt), u2 = this.u(f, f.rEst);
+        // la correzione e' lineare in u, cioe' nella stessa coordinata in cui
+        // e' lineare la forma della spirale; oltre i cerchi si prolunga
+        const t = (u2 === u1) ? 0 : (this.u(f, r) - u1) / (u2 - u1);
+        const d = sInt[L] + (sEst[L] - sInt[L]) * t;
+        const th = this.angoloIdeale(f, L, r) + d;
+        return this.aSchermo(this.centro[0] + r*Math.cos(th),
+                             this.centro[1] + r*Math.sin(th));
+    }
+
+    braccio(f, L, sInt, sEst) {
         const vertici = [];
         for(let i = 0; i <= PASSI; i++) {
             const r = f.rMin + (f.rMax - f.rMin) * i / PASSI;
-            // la correzione e' lineare in u, cioe' nella stessa coordinata in
-            // cui e' lineare la forma della spirale; oltre i cerchi si prolunga
-            const t = (u2 === u1) ? 0 : (this.u(f, r) - u1) / (u2 - u1);
-            const d = sInt[L] + (sEst[L] - sInt[L]) * t;
-            const th = this.angoloIdeale(f, L, r) + d;
-            const p = this.aSchermo(this.centro[0] + r*Math.cos(th),
-                                    this.centro[1] + r*Math.sin(th));
+            const p = this.puntoBraccio(f, L, r, sInt, sEst);
             vertici.push(new Two.Anchor(p.x, p.y));
         }
         const path = two.makePath(vertici, false);
@@ -237,6 +284,29 @@ class ParasticheSlide extends Slide {
         this.gruppoOverlay.add(g);
     }
 
+    // Per la presentazione servono gli archi separati e, in fondo a ciascuno,
+    // il pallino con il numero progressivo: si conta quello che si vede.
+    costruisceFamiglia(f) {
+        const sInt = this.scarti(f, 'int'), sEst = this.scarti(f, 'est');
+        const archi = [], pallini = [];
+        for(let L = 0; L < f.m; L++) {
+            const arco = this.braccio(f, L, sInt, sEst);
+            this.gruppoOverlay.add(arco);
+            archi.push(arco);
+
+            const q = this.puntoBraccio(f, L, f.rMax + NUMERO_FUORI, sInt, sEst);
+            const c = two.makeCircle(q.x, q.y, NUMERO_R);
+            c.fill = f.colore; c.stroke = '#ffffff'; c.linewidth = 2;
+            const t = two.makeText(String(L + 1), q.x, q.y,
+                {size: 26, weight: 'bold', family: 'Noto Sans, Arial',
+                 alignment: 'center', baseline: 'middle'});
+            t.fill = '#ffffff';
+            this.gruppoNumeri.add(c); this.gruppoNumeri.add(t);
+            pallini.push([c, t]);
+        }
+        return {archi: archi, pallini: pallini};
+    }
+
     // --- maniglie ---------------------------------------------------------
     posizioneManiglia(f, lato, k) {
         const r = lato === 'int' ? f.rInt : f.rEst;
@@ -259,18 +329,64 @@ class ParasticheSlide extends Slide {
     // --- disegno ----------------------------------------------------------
     svuota(g) { while(g.children.length > 0) g.children[0].remove(); }
 
-    ridisegna() {
+    ridisegna(animato) {
         this.svuota(this.gruppoOverlay);
+        this.svuota(this.gruppoNumeri);
         this.svuota(this.gruppoChrome);
         this.svuota(this.gruppoTesti);
+        this.contatore = null;
         if(this.regolazione) {
             const f = this.fam[this.famCorrente];
             this.disegnaFamiglia(f);
             this.disegnaChrome(f);
-        } else {
-            this.fam.slice(0, this.act).forEach(f => this.disegnaFamiglia(f));
-            this.disegnaNumeri();
+            return;
         }
+        // la famiglia che entra proprio adesso: solo quella si anima
+        const nuova = animato ? this.act - 1 : -1;
+        const elementi = this.fam.slice(0, this.act).map(
+            (f, i) => i === nuova ? this.costruisceFamiglia(f)
+                                  : (this.disegnaFamiglia(f), null));
+        this.disegnaNumeri(nuova);
+        if(nuova === 0) this.animaUnoPerVolta(this.fam[0], elementi[0]);
+        else if(nuova > 0) this.animaInsieme(this.fam[nuova], elementi[nuova]);
+        else if(animato && this.act > this.fam.length) this.animaChiusura();
+    }
+
+    fermaAnimazione() {
+        if(this.tl) { this.tl.kill(); this.tl = null; }
+    }
+
+    // La prima famiglia si conta: un braccio per volta, e il numero a destra
+    // sale insieme. I pallini servono mentre si conta e poi se ne vanno: se
+    // restassero, coprirebbero la corona proprio quando entra l'altra famiglia.
+    animaUnoPerVolta(f, el) {
+        el.archi.forEach(a => a.opacity = 0);
+        el.pallini.forEach(c => c.forEach(o => o.opacity = 0));
+        const tl = gsap.timeline();
+        el.archi.forEach((arco, i) => {
+            const t = i * T_BRACCIO;
+            tl.to(arco, {opacity: 1, duration: T_ENTRATA}, t);
+            tl.to(el.pallini[i], {opacity: 1, duration: T_ENTRATA}, t);
+            if(this.contatore)
+                tl.call(() => { this.contatore.value = String(i + 1); }, null, t);
+        });
+        const fine = f.m * T_BRACCIO + T_PAUSA;
+        tl.to([].concat.apply([], el.pallini),
+              {opacity: 0, duration: T_VIA_NUMERI}, fine);
+        this.tl = tl;
+    }
+
+    // La seconda entra tutta insieme: qui il numero non si conta, si guarda.
+    animaInsieme(f, el) {
+        el.archi.forEach(a => a.opacity = 0);
+        el.pallini.forEach(c => c.forEach(o => o.opacity = 0));
+        this.tl = gsap.timeline().to(el.archi, {opacity: 1, duration: T_FADE});
+    }
+
+    animaChiusura() {
+        if(!this.didascalia) return;
+        this.didascalia.opacity = 0;
+        this.tl = gsap.timeline().to(this.didascalia, {opacity: 1, duration: 0.8});
     }
 
     cerchio(r, tratteggio, riempi) {
@@ -333,14 +449,17 @@ class ParasticheSlide extends Slide {
         });
     }
 
-    disegnaNumeri() {
+    disegnaNumeri(chiConta) {
         for(let i = 0; i < this.act && i < this.fam.length; i++) {
             const f = this.fam[i];
-            const n = two.makeText(String(f.m), TESTO_X, -200 + i*230,
+            // quella che sta entrando parte da 1 e sale con i bracci
+            const n = two.makeText(i === chiConta ? '1' : String(f.m),
+                TESTO_X, -200 + i*230,
                 {size: 200, weight: 'bold', family: 'Noto Sans, Arial',
                  alignment: 'left', baseline: 'middle'});
             n.fill = f.colore;
             this.gruppoTesti.add(n);
+            if(i === chiConta) this.contatore = n;
             const e = two.makeText('spirali', TESTO_X + 260, -200 + i*230,
                 {size: 62, family: 'Noto Sans, Arial', alignment: 'left', baseline: 'middle'});
             e.fill = 'white';
@@ -351,6 +470,7 @@ class ParasticheSlide extends Slide {
                 {size: 54, family: 'Noto Sans, Arial', alignment: 'left', baseline: 'middle'});
             t.fill = 'white';
             this.gruppoTesti.add(t);
+            this.didascalia = t;
         }
     }
 
@@ -427,7 +547,7 @@ class ParasticheSlide extends Slide {
     onKeyDown(event) {
         const k = event.key;
         if(k === 'm') { this.regolazione = !this.regolazione; this.presa = null; this.ridisegna(); return; }
-        if(!this.regolazione) { if(k === '0') this.setAct(0); return; }
+        if(!this.regolazione) { if(k === '0') this.setAct(0, false); return; }
 
         const f = this.fam[this.famCorrente];
         // rifare: cambiano i bracci sotto le maniglie, gli angoli vecchi non
@@ -455,12 +575,14 @@ class ParasticheSlide extends Slide {
 
     // --- atti -------------------------------------------------------------
     get ultimoAtto() { return this.fam.length + 1; }
-    setAct(a) { this.act = a; this.ridisegna(); }
-    nextAct() { if(!this.regolazione && this.act < this.ultimoAtto) this.setAct(this.act + 1); }
-    prevAct() { if(!this.regolazione && this.act > 0) this.setAct(this.act - 1); }
+    // Si anima solo andando avanti: tornando indietro si vuole lo stato finale
+    // dell'atto, non rivedere il conteggio.
+    setAct(a, animato) { this.fermaAnimazione(); this.act = a; this.ridisegna(animato); }
+    nextAct() { if(!this.regolazione && this.act < this.ultimoAtto) this.setAct(this.act + 1, true); }
+    prevAct() { if(!this.regolazione && this.act > 0) this.setAct(this.act - 1, false); }
 
-    cleanup() {}
-    async end() {}
+    cleanup() { this.fermaAnimazione(); }
+    async end() { this.fermaAnimazione(); }
 }
 
 let t = new ParasticheSlide();
