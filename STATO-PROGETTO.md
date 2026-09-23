@@ -41,9 +41,11 @@ scrivere un numero di slide da qualche parte, ricontarlo.
 | 14–16 | gcd × 3 | `gcd/gcdintro.js`, `gcd.js`, `slowgcd.js` | non rivista |
 | 17 | ContinuedFractions | `gcd/continued-fractions.js` | **nuova** |
 | 18 | Mandelbrot | `mandelbrot/mandelbrot.js` | **riscritto da zero**, antenne complete |
-| 19–22 | plants + girasoli × 3 | `sunflower/plants.js`, `sunflower1-3.js` | attivate in `index.html`, **mai guardate** |
+| 19 | plants | `sunflower/plants.js` | attivata, mai guardata |
+| 20 | Parastiche | `sunflower/parastiche.js` | **nuova**: le spirali sulla foto, fasi da misurare a mano |
+| 21–23 | girasoli × 3 | `sunflower/sunflower1-3.js` | attivate in `index.html`, **mai guardate** |
 
-**23 slide contro le 16 della scaletta.** Non è un errore di conto: la riorganizzazione
+**24 slide contro le 16 della scaletta.** Non è un errore di conto: la riorganizzazione
 disegnata nella scaletta — fondere le tre identità in una slide, spaccare l'arte in
 «deliberato / retrodatato», spostare Binet e Cassini — **non è mai stata applicata a
 `index.html`**. Il mazzo ha ancora la struttura vecchia, con dentro le slide nuove.
@@ -66,31 +68,34 @@ Non attiva: `title/title.js`, cioè la slide del titolo.
 
 ## Quello che resta da fare
 
-1. **Le quattro slide del girasole (19–22)**: attivate ma mai aperte. È il blocco più
-   grosso ancora al buio.
-2. **La seconda slide dell'arte — gli strafalcioni.** Accanto a quella su Fibonacci
+1. **Finire la slide 20, `parastiche.js`.** Il telaio c'è: foto, overlay, modalità di
+   regolazione con i due cerchi di riferimento, misura col clic, stampa della tabella.
+   Mancano **i dati**: le fasi dei bracci, da misurare a occhio sulla foto. Vedi sotto
+   perché si fa a mano.
+2. **Le quattro slide del girasole (19, 21–23)**: attivate ma mai aperte.
+3. **La seconda slide dell'arte — gli strafalcioni.** Accanto a quella su Fibonacci
    nell'arte: la prima i casi deliberati (Merz, i cubi pisani), la seconda i retrodatati
    (Partenone, Gioconda, proporzioni del corpo umano).
-3. **La conchiglia dopo la spirale.** Non come illustrazione ma come smentita — vedi sotto
+4. **La conchiglia dopo la spirale.** Non come illustrazione ma come smentita — vedi sotto
    il numero giusto, che nella scaletta era sbagliato.
-4. **Binet e Cassini, mai spostati.** Deciso e mai fatto: Binet va attaccato alla slide di
+5. **Binet e Cassini, mai spostati.** Deciso e mai fatto: Binet va attaccato alla slide di
    φ, Cassini più il paradosso della dissezione vanno come finale della slide delle
    identità. La scaletta descrive ancora la sistemazione vecchia in quel punto.
-5. **La tabella errore × q² della slide sulle frazioni continue.** La slide costruita
+6. **La tabella errore × q² della slide sulle frazioni continue.** La slide costruita
    copre il procedimento, il troncamento prima del 292, 355/113 e i convergenti di φ, ma
    **non** il punto (e) del disegno: errore × q² che per π precipita e per φ resta
    incollato a 0,447 = 1/√5. È il momento in cui «φ si approssima male» smette di essere
    una frase a effetto e diventa un numero. Anche la terminazione (finito ⇔ razionale) e
    «è esattamente Euclide» oggi sono a voce, non sulla slide.
-6. **Douady & Couder (1992)**, la slide che manca di più: è il ponte fra «φ è il più
+7. **Douady & Couder (1992)**, la slide che manca di più: è il ponte fra «φ è il più
    difficile da approssimare» e «quindi le piante usano φ». Meglio una simulazione che una
    fotografia protetta da copyright — e meglio della slide `sunflower1.js`, che l'angolo
    aureo lo *impone*, mentre Douady–Couder lo fa *emergere* da una regola di repulsione.
 
 ### Cose piccole, tutte vere e tutte da ripulire
 
-- `slides/assets/sunflower-2.png` e `slides/assets/fibonacci.jpg` sono committati e non li
-  usa nessuno.
+- `slides/assets/fibonacci.jpg` è committato e non lo usa nessuno. (`sunflower-2.png`
+  adesso lo usa la slide 20.)
 - `console.log("act2", ...)` di debug in `tiling/tiling.js:207`.
 - `golden-ratio.js` usa il punto come separatore decimale, le slide più recenti la virgola.
 - Due commit non pushati sul repository della conferenza.
@@ -126,3 +131,20 @@ bene così.
 **La torre delle frazioni continue nella slide di φ si ferma a tre livelli.** Motivo
 tecnico: a quattro è alta 535 px e va addosso alla forma chiusa. Motivo migliore: così
 l'ultima pressione non allunga la torre, toglie la φ.
+
+**Le spirali della slide 20 si posizionano a mano, e non per sbaglio.** Un girasole vero
+non ha i bracci equispaziati lungo il giro. Disegnando m copie della stessa curva ruotate
+di 2π/m, a un certo angolo cadono negli spazi fra i pistilli e novanta gradi più in là ci
+passano sopra: da lontano regge, in prima fila no. Quindi la forma della curva è condivisa
+(il passo è quello), ma **ogni braccio si porta la sua fase**, misurata dove interseca due
+cerchi di riferimento; fra i due si interpola, e i bracci non misurati si prendono dai
+vicini. Quello che si segue non è un modello: sono gli errori che ha fatto la pianta.
+
+Il tentativo di ricavarle automaticamente (`tools/misura-parastiche.py`) **è fallito su
+questa foto**, e vale la pena sapere fin dove è arrivato: il numero 55 è solido, misurato
+netto in ogni fascia di raggio, e il suo partner deve essere 34 perché il capolino non ha
+simmetria a 1/2, 1/3 o 1/5 di giro, quindi le parastiche adiacenti sono coprime e 35 e 56
+sono esclusi. Ma la famiglia da 34 in questa immagine è troppo debole: il fit dà passi fra
+−16 e +38 a seconda della fascia, cioè rumore. Le immagini dei tentativi stanno in
+`work/parastiche/` (non tracciate); `verifica.png` è la più utile — pannello destro quello
+che funziona, sinistro quello che non funziona.
