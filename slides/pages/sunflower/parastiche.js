@@ -41,22 +41,25 @@ import {Slide, two, center} from '../../libs/gmtlib.js';
 // equispaziate: gli angoli vecchi si riferivano ad altri bracci e tenerli
 // sarebbe peggio che rifarli.
 //
-// I numeri di partenza vengono da tools/misura-parastiche.py. Il 55 e' misurato
-// bene; il 34 e' solo un punto di partenza da aggiustare a occhio, perche' in
-// questa foto quella famiglia e' debole.
+// I numeri di partenza vengono da tools/misura-parastiche.py, girato su questa
+// foto. Il 55 e' misurato bene (ampiezza 0.30, fino a 0.53 sulla corona
+// esterna); il 34 e' debole (0.11) ed e' solo un punto di partenza. Se non si
+// riesce a farlo cadere sui fiori, il candidato buono e' 89: su questa foto ha
+// ampiezza 0.25, e 55 e 89 sono Fibonacci consecutivi come 34 e 55. Si cambia
+// con [z/x].
 
-const IMG = '/slides/assets/sunflower-2.png';
-const IMG_W = 915, IMG_H = 1280;
+const IMG = '/slides/assets/sunflower-1.png';
+const IMG_W = 958, IMG_H = 958;
 
-// La foto sta a sinistra, piu' grande che si puo' (a 0.82 l'immagine e' alta
-// 1050 dei 1080 disponibili): piu' e' grande, piu' e' facile prendere la
-// maniglia giusta. A destra restano i numeri.
-const SCALA   = 0.82;
+// La foto sta a sinistra, piu' grande che si puo': piu' e' grande, piu' e'
+// facile prendere la maniglia giusta. A destra restano i numeri. Il capolino
+// non e' al centro dell'immagine, quindi lo sprite finisce spostato.
+const SCALA   = 0.88;
 const DISCO_X = -500, DISCO_Y = 0;
-const TESTO_X = -40;
+const TESTO_X = 40;
 
 // Centro del capolino, in pixel dell'immagine.
-const CENTRO_INIZIALE = [482.3, 641.8];
+const CENTRO_INIZIALE = [424.1, 508.3];
 
 // Si sposta il centro solo cliccando ben dentro il cerchio interno: piu' in la'
 // il clic significa "afferra una maniglia", e le due cose non devono litigare.
@@ -75,20 +78,20 @@ const FAMIGLIE = [
         m: 34,
         colore: '#ff3b3b',
         // forma: theta(r) = (2*pi*L - fase)/m - passo*u(r)/m,  u(r) = (sqrt(r)-mu)/sd
-        mu: 14.5583, sd: 2.0115,
-        passo: -9, fase: -2.6414,
-        rInt: 140, rEst: 250,
-        rMin: 95,  rMax: 295,
+        mu: 15.6878, sd: 2.0212,
+        passo: -12, fase: -0.8762,
+        rInt: 180, rEst: 300,
+        rMin: 110, rMax: 350,
         controlli: {n: 8, int: [], est: []},
     },
     {
         nome: 'blu',
         m: 55,
         colore: '#3bb0ff',
-        mu: 14.5583, sd: 2.0115,
-        passo: +4, fase: -2.9984,
-        rInt: 140, rEst: 250,
-        rMin: 95,  rMax: 295,
+        mu: 15.6878, sd: 2.0212,
+        passo: +9, fase: -2.7222,
+        rInt: 180, rEst: 300,
+        rMin: 110, rMax: 350,
         controlli: {n: 8, int: [], est: []},
     },
 ];
