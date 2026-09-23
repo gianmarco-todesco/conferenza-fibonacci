@@ -346,9 +346,11 @@ class ParasticheSlide extends Slide {
         const elementi = this.fam.slice(0, this.act).map(
             (f, i) => i === nuova ? this.costruisceFamiglia(f)
                                   : (this.disegnaFamiglia(f), null));
-        this.disegnaNumeri(nuova);
+        // conta solo la prima famiglia: per le altre il numero e' gia' quello
+        // giusto, e entra in dissolvenza insieme ai suoi archi
+        this.disegnaNumeri(nuova === 0 ? 0 : -1);
         if(nuova === 0) this.animaUnoPerVolta(this.fam[0], elementi[0]);
-        else if(nuova > 0) this.animaInsieme(this.fam[nuova], elementi[nuova]);
+        else if(nuova > 0) this.animaInsieme(elementi[nuova], nuova);
         else if(animato && this.act > this.fam.length) this.animaChiusura();
     }
 
@@ -377,10 +379,13 @@ class ParasticheSlide extends Slide {
     }
 
     // La seconda entra tutta insieme: qui il numero non si conta, si guarda.
-    animaInsieme(f, el) {
+    animaInsieme(el, i) {
         el.archi.forEach(a => a.opacity = 0);
         el.pallini.forEach(c => c.forEach(o => o.opacity = 0));
-        this.tl = gsap.timeline().to(el.archi, {opacity: 1, duration: T_FADE});
+        const testi = this.testiFamiglia[i] || [];
+        testi.forEach(t => t.opacity = 0);
+        this.tl = gsap.timeline()
+            .to(el.archi.concat(testi), {opacity: 1, duration: T_FADE});
     }
 
     animaChiusura() {
@@ -450,6 +455,7 @@ class ParasticheSlide extends Slide {
     }
 
     disegnaNumeri(chiConta) {
+        this.testiFamiglia = [];
         for(let i = 0; i < this.act && i < this.fam.length; i++) {
             const f = this.fam[i];
             // quella che sta entrando parte da 1 e sale con i bracci
@@ -464,6 +470,7 @@ class ParasticheSlide extends Slide {
                 {size: 62, family: 'Noto Sans, Arial', alignment: 'left', baseline: 'middle'});
             e.fill = 'white';
             this.gruppoTesti.add(e);
+            this.testiFamiglia[i] = [n, e];
         }
         if(this.act > this.fam.length) {
             const t = two.makeText('due numeri di Fibonacci consecutivi', TESTO_X, 290,
