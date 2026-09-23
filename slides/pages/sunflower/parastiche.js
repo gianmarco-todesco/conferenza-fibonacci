@@ -79,7 +79,7 @@ const FAMIGLIE = [
         passo: -9, fase: -2.6414,
         rInt: 140, rEst: 250,
         rMin: 95,  rMax: 295,
-        controlli: {n: 6, int: [], est: []},
+        controlli: {n: 8, int: [], est: []},
     },
     {
         nome: 'blu',
@@ -89,7 +89,7 @@ const FAMIGLIE = [
         passo: +4, fase: -2.9984,
         rInt: 140, rEst: 250,
         rMin: 95,  rMax: 295,
-        controlli: {n: 6, int: [], est: []},
+        controlli: {n: 8, int: [], est: []},
     },
 ];
 
@@ -108,6 +108,9 @@ class ParasticheSlide extends Slide {
         this.famCorrente = 0;
         this.act = 0;
         this.presa = null;
+        // si comincia con i soli bracci governati da una maniglia: e' la
+        // condizione in cui si vede davvero se cadono al posto giusto
+        this.soloManiglie = true;
 
         this.fam.forEach(f => this.sistemaControlli(f));
 
@@ -220,7 +223,14 @@ class ParasticheSlide extends Slide {
     disegnaFamiglia(f) {
         const sInt = this.scarti(f, 'int'), sEst = this.scarti(f, 'est');
         const g = two.makeGroup();
-        for(let L = 0; L < f.m; L++) g.add(this.braccio(f, L, sInt, sEst));
+        // Con 34 bracci accesi non si capisce se UNO cade bene sui pistilli.
+        // Con soli quelli governati da una maniglia si vede benissimo: si
+        // piazzano quelli, e poi si riaccende il resto per il controllo.
+        const soli = this.soloManiglie && this.regolazione;
+        for(let L = 0; L < f.m; L++) {
+            if(soli && f.controlli.bracci.indexOf(L) < 0) continue;
+            g.add(this.braccio(f, L, sInt, sEst));
+        }
         this.gruppoOverlay.add(g);
     }
 
@@ -300,8 +310,9 @@ class ParasticheSlide extends Slide {
             'famiglia ' + f.nome + '  [t]',
             'bracci ' + f.m + '  [z/x]',
             'maniglie per cerchio ' + f.controlli.n + '  [g/h]',
-            'passo ' + f.passo.toFixed(2) + '  [q/w]',
-            'fase ' + f.fase.toFixed(4) + '  [a/s]',
+            'mostra ' + (this.soloManiglie ? 'solo i bracci con maniglia' : 'tutti i bracci') + '  [v]',
+            'passo ' + f.passo.toFixed(2) + '  [q/w]  grosso [Q/W]',
+            'fase ' + f.fase.toFixed(4) + '  [a/s]  grosso [A/S]',
             'cerchi ' + f.rInt.toFixed(0) + '  [e/r]   e  ' + f.rEst.toFixed(0) + '  [d/f]',
             'centro ' + this.centro[0].toFixed(1) + ' , ' + this.centro[1].toFixed(1),
             '',
@@ -363,16 +374,28 @@ class ParasticheSlide extends Slide {
         const f = this.fam[this.famCorrente];
         const p = this.aImmagine(x, y);
         const r = Math.hypot(p.u - this.centro[0], p.v - this.centro[1]);
-        this.presa = (r < f.rInt * FRAZIONE_CENTRO)
-            ? {centro: true}
-            : this.manigliaPiuVicina(f, p.u, p.v);
-        if(this.presa && !this.presa.centro) this.trascinaManiglia(f, p);
+        if(r < f.rInt * FRAZIONE_CENTRO) {
+            this.presa = {centro: true};
+        } else {
+            this.presa = this.manigliaPiuVicina(f, p.u, p.v);
+            // Si afferra senza far saltare la maniglia dove si e' cliccato: si
+            // memorizza lo scarto fra i due angoli e lo si conserva per tutto
+            // il trascinamento. Se no un clic dieci pixel fuori bersaglio
+            // sposta la maniglia di dieci pixel prima ancora di muovere il
+            // mouse, e aggiustare finemente diventa impossibile.
+            this.presa.offset = aPiGreco(
+                f.controlli[this.presa.lato][this.presa.k] - this.angoloPuntatore(p));
+        }
         this.ridisegna();
+    }
+
+    angoloPuntatore(p) {
+        return Math.atan2(p.v - this.centro[1], p.u - this.centro[0]);
     }
 
     trascinaManiglia(f, p) {
         f.controlli[this.presa.lato][this.presa.k] =
-            Math.atan2(p.v - this.centro[1], p.u - this.centro[0]);
+            this.angoloPuntatore(p) + this.presa.offset;
     }
 
     onPointerDrag(x, y, dx, dy, e) {
@@ -409,7 +432,10 @@ class ParasticheSlide extends Slide {
         const rifai = () => { f.controlli.int = []; f.controlli.est = []; this.sistemaControlli(f); };
         const tasti = {
             q: () => f.passo -= 0.25,   w: () => f.passo += 0.25,
+            Q: () => f.passo -= 2,      W: () => f.passo += 2,
             a: () => f.fase  -= 0.02,   s: () => f.fase  += 0.02,
+            A: () => f.fase  -= 0.15,   S: () => f.fase  += 0.15,
+            v: () => this.soloManiglie = !this.soloManiglie,
             z: () => { f.m = Math.max(3, f.m - 1); rifai(); },
             x: () => { f.m += 1; rifai(); },
             g: () => { f.controlli.n = Math.max(2, f.controlli.n - 1); rifai(); },
