@@ -184,6 +184,11 @@ class ParasticheSlide extends Slide {
             vertici.push(new Two.Anchor(p.x, p.y));
         }
         const path = two.makePath(vertici, false);
+        // closed va rimesso a mano: il secondo argomento di makePath non basta
+        // (a seconda della versione di Two.js viene letto come "open" oppure
+        // ignorato quando i vertici arrivano gia' come array), e un arco chiuso
+        // ricongiunge la punta con la coda sporcando il centro del fiore.
+        path.closed = false;
         path.curved = false;
         path.noFill();
         path.stroke = f.colore;
