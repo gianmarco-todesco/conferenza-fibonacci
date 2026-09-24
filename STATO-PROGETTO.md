@@ -26,31 +26,31 @@ scrivere un numero di slide da qualche parte, ricontarlo.
 
 | # | slide | file | stato |
 |---|---|---|---|
-| 0 | Sequence | `title/sequence.js` | **rifatta**: definizione → semi → animazione → ritratto + Liber Abaci |
-| 1 | Pingala | `title/pingala.js` | **nuova** |
-| 2 | Tiling | `tiling/tiling.js` | non rivista |
-| 3–4 | conigli + mitosi | `rabbits/rabbits.js` | non rivista |
-| 5 | GoldenRatio | `golden-ratio/golden-ratio.js` | **rifatta** |
-| 6 | Arte | `art/art.js` | non rivista |
-| 7 | FibonacciSum | `identities/fibonacci-sum.js` | non rivista |
-| 8 | FibonacciSumTiling | `identities/fibonacci-sum-tiling.js` | **nuova** |
-| 9 | TwoSquaresSum | `identities/sum-of-two-squares.js` | non rivista |
-| 10 | TwoSquaresTiling | `identities/sum-of-two-squares-tiling.js` | **nuova** |
-| 11 | SumOfSquares | `identities/sum-of-squares.js` | non rivista |
-| 12–13 | spirale × 2 | `spiral/spiral.js` | non rivista |
-| 14–16 | gcd × 3 | `gcd/gcdintro.js`, `gcd.js`, `slowgcd.js` | non rivista |
-| 17 | ContinuedFractions | `gcd/continued-fractions.js` | **nuova** |
-| 18 | Mandelbrot | `mandelbrot/mandelbrot.js` | **riscritto da zero**, antenne complete |
-| 19 | plants | `sunflower/plants.js` | attivata, mai guardata |
-| 20 | Parastiche | `sunflower/parastiche.js` | **nuova**: le spirali sulla foto, fasi da misurare a mano |
-| 21–23 | girasoli × 3 | `sunflower/sunflower1-3.js` | attivate in `index.html`, **mai guardate** |
+| 0 | Titolo | `title/title.js` | attivata, mai guardata |
+| 1 | Sequence | `title/sequence.js` | **rifatta**: definizione → semi → animazione → ritratto + Liber Abaci |
+| 2 | Pingala | `title/pingala.js` | **nuova** |
+| 3 | Tiling | `tiling/tiling.js` | non rivista |
+| 4–5 | conigli + mitosi | `rabbits/rabbits.js` | non rivista |
+| 6 | GoldenRatio | `golden-ratio/golden-ratio.js` | **rifatta** |
+| 7 | Arte | `art/art.js` | non rivista |
+| 8 | FibonacciSum | `identities/fibonacci-sum.js` | non rivista |
+| 9 | FibonacciSumTiling | `identities/fibonacci-sum-tiling.js` | **nuova** |
+| 10 | TwoSquaresSum | `identities/sum-of-two-squares.js` | non rivista |
+| 11 | TwoSquaresTiling | `identities/sum-of-two-squares-tiling.js` | **nuova** |
+| 12 | SumOfSquares | `identities/sum-of-squares.js` | non rivista |
+| 13–14 | spirale × 2 | `spiral/spiral.js` | non rivista |
+| 15–17 | gcd × 3 | `gcd/gcdintro.js`, `gcd.js`, `slowgcd.js` | non rivista |
+| 18 | ContinuedFractions | `gcd/continued-fractions.js` | **nuova** |
+| 19 | Mandelbrot | `mandelbrot/mandelbrot.js` | **riscritto da zero**, antenne complete |
+| 20 | plants | `sunflower/plants.js` | attivata, mai guardata |
+| 21 | Parastiche | `sunflower/parastiche.js` | **nuova**: le spirali sulla foto, fasi da misurare a mano |
+| 22–24 | girasoli × 3 | `sunflower/sunflower1-3.js` | attivate in `index.html`, **mai guardate** |
+| 25 | DouadyCouder | `sunflower/douady-couder.js` | **nuova**: l'angolo aureo che emerge dalla repulsione |
 
-**24 slide contro le 16 della scaletta.** Non è un errore di conto: la riorganizzazione
+**26 slide contro le 16 della scaletta.** Non è un errore di conto: la riorganizzazione
 disegnata nella scaletta — fondere le tre identità in una slide, spaccare l'arte in
 «deliberato / retrodatato», spostare Binet e Cassini — **non è mai stata applicata a
 `index.html`**. Il mazzo ha ancora la struttura vecchia, con dentro le slide nuove.
-
-Non attiva: `title/title.js`, cioè la slide del titolo.
 
 ## Infrastruttura
 
@@ -87,10 +87,10 @@ Non attiva: `title/title.js`, cioè la slide del titolo.
    incollato a 0,447 = 1/√5. È il momento in cui «φ si approssima male» smette di essere
    una frase a effetto e diventa un numero. Anche la terminazione (finito ⇔ razionale) e
    «è esattamente Euclide» oggi sono a voce, non sulla slide.
-7. **Douady & Couder (1992)**, la slide che manca di più: è il ponte fra «φ è il più
-   difficile da approssimare» e «quindi le piante usano φ». Meglio una simulazione che una
-   fotografia protetta da copyright — e meglio della slide `sunflower1.js`, che l'angolo
-   aureo lo *impone*, mentre Douady–Couder lo fa *emergere* da una regola di repulsione.
+7. ~~**Douady & Couder (1992)**~~ — **fatta**: slide 25, `sunflower/douady-couder.js`.
+   È la simulazione del modello numerico dell'articolo, non una fotografia: le foto
+   hanno un copyright e questa slide si proietta in pubblico. L'apparato è disegnato
+   in sezione nell'atto 0.
 
 ### Cose piccole, tutte vere e tutte da ripulire
 
@@ -148,3 +148,16 @@ sono esclusi. Ma la famiglia da 34 in questa immagine è troppo debole: il fit d
 −16 e +38 a seconda della fascia, cioè rumore. Le immagini dei tentativi stanno in
 `work/parastiche/` (non tracciate); `verifica.png` è la più utile — pannello destro quello
 che funziona, sinistro quello che non funziona.
+
+**L'atto 2 della slide 25 abbassa G da solo, e non è un vezzo di regia.** Partendo di
+colpo da un G piccolo il sistema cade su un **ramo diverso**: a G = 0,12 esce 101,8°, che
+è il ramo di Lucas, non quello di Fibonacci. Il ramo giusto lo si trova solo abbassando G
+lentamente — è quello che fanno Douady e Couder, ed è misurato, non supposto. Con la
+manopola a mano (`q`/`w`) il salto è volutamente piccolo per lo stesso motivo; premendo
+forte si finisce sull'altro ramo, e vale la pena farlo vedere.
+
+Due numeri verificati prima di scrivere la slide, perché è tutto quello che la slide
+afferma: il punto fisso a G = 0,02 è **137,47° ± 0,01** contro i 137,5078° dell'angolo
+aureo (la differenza residua è del modello: a G finito il punto fisso non è esattamente
+360/φ²), e **non dipende dai dettagli della repulsione** — con esponente 3 e con esponente
+6 coincide entro 0,05°. Se dipendesse, la risposta l'avremmo scelta noi.
