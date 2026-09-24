@@ -1,4 +1,4 @@
-# conferenza-fibonacci-pisa2025 — istruzioni per Claude
+# conferenza-fibonacci — istruzioni per Claude
 
 Mazzo di slide interattive in JavaScript per una conferenza divulgativa su Fibonacci.
 Niente build, niente framework: moduli ES, Two.js (renderer SVG), GSAP, KaTeX.

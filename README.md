@@ -1,1 +1,1 @@
-# conferenza-fibonacci-pisa2025
+# conferenza-fibonacci

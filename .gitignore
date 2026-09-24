@@ -1,0 +1,4 @@
+# Prodotti della compilazione di Python: cambiano a ogni versione
+# dell'interprete e non servono a nessuno.
+__pycache__/
+*.py[cod]

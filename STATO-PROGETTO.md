@@ -1,6 +1,6 @@
 # Conferenza «Fibonacci: numeri fantastici e dove trovarli»
 
-Stato del progetto — **23 settembre 2026**. Premiazione delle olimpiadi della matematica,
+Stato del progetto — **24 settembre 2026**. Premiazione delle olimpiadi della matematica,
 Pisa. Pubblico di studenti delle superiori, circa 50 minuti.
 
 ## I due documenti, e a cosa servono
@@ -9,6 +9,10 @@ Pisa. Pubblico di studenti delle superiori, circa 50 minuti.
 |---|---|---|
 | **la scaletta** | <https://claude.ai/code/artifact/cbf35a51-7abb-4087-bd75-b37be18f8607> | il disegno della conferenza: la tesi, slide per slide, le correzioni da portarsi dietro, cosa è stato tagliato e perché |
 | **questo file** | `STATO-PROGETTO.md` | lo stato del codice: cosa è fatto, cosa manca, le decisioni che nei sorgenti non si leggono |
+
+La cartella si chiama **`conferenze/conferenza-fibonacci`**: si chiamava
+`conferenza-fibonacci-pisa2025` fino al 24 settembre 2026, e un percorso vecchio scritto
+da qualche parte non funziona più.
 
 La scaletta dice **cosa raccontare**, questo file dice **cosa c'è**. Finito un pezzo si
 aggiornano tutti e due: è già successo che divergessero, e quando divergono vince la
