@@ -39,9 +39,17 @@ const DUEPI = Math.PI * 2;
 const ANGOLO_AUREO = 360 / Math.pow((1 + Math.sqrt(5)) / 2, 2);   // 137,5078
 
 // --- il piatto sullo schermo -----------------------------------------------
-const PIATTO_X = -440, PIATTO_Y = 0;
-const R_DENTRO = 22, R_FUORI = 430;
-const ETA_MAX  = 62;            // quante gocce restano nel piatto
+// Il piatto sta alzato e un filo stretto perche' sotto ci deve stare la
+// didascalia: col bordo a y = 456 il cerchio passava dentro le lettere.
+const PIATTO_X = -440, PIATTO_Y = -50;
+const R_DENTRO = 22, R_FUORI = 420;
+// Quante gocce stanno nel piatto NON e' una costante: e' il significato stesso
+// di G. Se le gocce arrivano di rado rispetto a quanto in fretta si allontanano
+// (G grande), nel piatto ce ne sono poche; se arrivano fitte, il piatto si
+// riempie. Tenendolo costante le gocce a G alto finivano impacchettate in una
+// riga solida, che non e' quello che si vede nel piatto vero.
+const ETA_MIN  = 14, ETA_MAX = 62;
+const ETA_K    = 1.30;          // eta' massima ~ ETA_K/G, poi si taglia
 const R_GOCCIA = 9;
 
 // Il raggio sullo schermo cresce LINEARMENTE con l'eta' della goccia, mentre
@@ -49,8 +57,8 @@ const R_GOCCIA = 9;
 // dove il gradiente magnetico porta le gocce fuori a velocita' circa costante.
 // Le due cose differiscono per un logaritmo, che non tocca gli angoli - e gli
 // angoli sono tutto il contenuto di questa slide.
-function raggioSchermo(eta) {
-    return R_DENTRO + (R_FUORI - R_DENTRO) * Math.min(eta, ETA_MAX) / ETA_MAX;
+function raggioSchermo(eta, etaMax) {
+    return R_DENTRO + (R_FUORI - R_DENTRO) * Math.min(eta, etaMax) / etaMax;
 }
 
 // --- il modello -------------------------------------------------------------
@@ -90,6 +98,11 @@ class DouadyCouderSlide extends Slide {
         this.act = 0;
         this.reset();
         this.ridisegna();
+    }
+
+    // Quante gocce ci stanno adesso, dato il G di adesso.
+    etaMax() {
+        return Math.round(Math.min(ETA_MAX, Math.max(ETA_MIN, ETA_K / this.G)));
     }
 
     reset() {
@@ -143,7 +156,8 @@ class DouadyCouderSlide extends Slide {
         }
         this.gocce.push({nato: this.passo, theta: th});
         this.passo++;
-        while(this.gocce.length && this.passo - this.gocce[0].nato > ETA_MAX)
+        const eMax = this.etaMax();
+        while(this.gocce.length && this.passo - this.gocce[0].nato > eMax)
             this.gocce.shift();
 
         // La discesa di G e' geometrica e lenta: saltare a un G piccolo fa
@@ -170,7 +184,7 @@ class DouadyCouderSlide extends Slide {
 
     posizione(g) {
         const eta = this.passo + this.frazione - g.nato;
-        const r = raggioSchermo(eta);
+        const r = raggioSchermo(eta, this.etaMax());
         return {x: PIATTO_X + r * Math.cos(g.theta),
                 y: PIATTO_Y + r * Math.sin(g.theta)};
     }
@@ -181,15 +195,15 @@ class DouadyCouderSlide extends Slide {
         this.svuota(this.gruppoTesti);
         this.svuota(this.gruppoApparato);
 
-        if(this.act === 0) { this.disegnaApparato(); this.disegnaRegola(); return; }
-
-        // il bordo del piatto
+        // il bordo del piatto, sempre: e' l'unica immagine della slide
         const piatto = two.makeCircle(PIATTO_X, PIATTO_Y, R_FUORI + 26);
         piatto.noFill();
         piatto.stroke = 'rgba(255,255,255,0.35)';
         piatto.linewidth = 3;
         this.gruppoApparato.add(piatto);
+        this.disegnaDidascalia();
 
+        if(this.act === 0) { this.disegnaRegola(); return; }
         if(this.act >= 3) this.disegnaParastiche();
 
         this.gocce.forEach(g => {
@@ -213,60 +227,28 @@ class DouadyCouderSlide extends Slide {
         return o;
     }
 
-    disegnaRegola() {
-        this.testo('Douady & Couder, 1992', TESTO_X, -330, 46, 'white', true);
-        const righe = [
-            'Gocce di ferrofluido cadono al centro',
-            'di un piatto d’olio, a intervalli regolari.',
-            '',
-            'Un campo magnetico le spinge verso il bordo.',
-            '',
-            'Ogni goccia respinge le altre.',
-        ];
-        righe.forEach((r, i) => { if(r) this.testo(r, TESTO_X, -230 + i*54, 38); });
-        this.testo('Nient’altro.', TESTO_X, 120, 44, '#ffd24d', true);
-        this.testo('Niente biologia, niente DNA, niente disegno.', TESTO_X, 180, 34);
+    // La didascalia sta sotto l'unica immagine della slide, e dice che dietro
+    // c'e' un esperimento vero: quello che si vede sopra e' la simulazione del
+    // modello dell'articolo, e va detto invece che lasciato capire.
+    disegnaDidascalia() {
+        this.testo('Douady & Couder, 1992: gocce di ferrofluido in un piatto d’olio,',
+                   -900, 452, 30, 'rgba(255,255,255,0.7)');
+        this.testo('spinte verso il bordo da un campo magnetico. Qui il loro modello numerico.',
+                   -900, 490, 30, 'rgba(255,255,255,0.7)');
     }
 
-    // Sezione del piatto: si vede che e' un esperimento con la materia, non una
-    // simulazione. Disegnato e non fotografato: le foto dell'articolo hanno un
-    // copyright, e questa slide si proietta in pubblico.
-    disegnaApparato() {
-        const cx = PIATTO_X, cy = -40, semi = 360, h = 90;
-        const g = this.gruppoApparato;
-        const aggiungi = o => { g.add(o); return o; };
-
-        // i due magneti
-        [[-1, -230], [1, 150]].forEach(([verso, y]) => {
-            const m = aggiungi(two.makeRectangle(cx, y, semi*2.1, 26));
-            m.fill = '#9aa3b0'; m.stroke = '#59606b'; m.linewidth = 2;
-        });
-        // il campo, piu' fitto verso il bordo: e' il gradiente che spinge fuori
-        for(let i = -5; i <= 5; i++) {
-            const x = cx + i * semi/5;
-            const l = aggiungi(two.makeLine(x, -204, x, 124));
-            l.stroke = 'rgba(120,180,255,' + (0.15 + 0.07*Math.abs(i)) + ')';
-            l.linewidth = 2 + Math.abs(i) * 0.6;
-        }
-        // l'olio
-        const olio = aggiungi(two.makeRectangle(cx, cy + h/2, semi*2, h));
-        olio.fill = 'rgba(90,160,220,0.28)';
-        olio.stroke = 'rgba(160,210,255,0.8)'; olio.linewidth = 3;
-
-        // il capillare e la goccia che cade
-        const cap = aggiungi(two.makeRectangle(cx, cy - 120, 12, 120));
-        cap.fill = '#d8dde4'; cap.stroke = '#8b929c'; cap.linewidth = 2;
-        const cade = aggiungi(two.makeCircle(cx, cy - 42, 11));
-        cade.fill = COL_GOCCIA; cade.stroke = '#7a3c00'; cade.linewidth = 2;
-
-        // le gocce sulla superficie, che scivolano verso il bordo
-        [-300, -215, -130, -55, 55, 130, 215, 300].forEach(dx => {
-            const d = aggiungi(two.makeCircle(cx + dx, cy, 11));
-            d.fill = COL_GOCCIA; d.stroke = '#7a3c00'; d.linewidth = 2;
-            const f = aggiungi(two.makeLine(cx + dx + Math.sign(dx)*18, cy,
-                                            cx + dx + Math.sign(dx)*40, cy));
-            f.stroke = '#ffd24d'; f.linewidth = 3;
-        });
+    disegnaRegola() {
+        const righe = [
+            'Una goccia cade al centro,',
+            'a intervalli regolari.',
+            '',
+            'Viene spinta verso il bordo.',
+            '',
+            'Respinge le altre gocce.',
+        ];
+        righe.forEach((r, i) => { if(r) this.testo(r, TESTO_X, -250 + i*56, 42); });
+        this.testo('Nient’altro.', TESTO_X, 110, 48, '#ffd24d', true);
+        this.testo('Niente biologia, niente DNA, niente disegno.', TESTO_X, 175, 34);
     }
 
     disegnaParastiche() {
@@ -283,7 +265,6 @@ class DouadyCouderSlide extends Slide {
     }
 
     disegnaLettura() {
-        this.testo('Douady & Couder, 1992', TESTO_X, -400, 38, 'rgba(255,255,255,0.75)');
         this.testo('angolo fra una goccia e la successiva', TESTO_X, -300, 34);
         const a = this.angolo === null ? '—' :
                   this.angolo.toFixed(1).replace('.', ',') + '°';
@@ -295,6 +276,14 @@ class DouadyCouderSlide extends Slide {
         this.testo(this.girando ? 'gocce: ' + this.gocce.length : 'ferma  [spazio]',
                    TESTO_X, -16, 32, 'rgba(255,255,255,0.75)');
 
+        // I 180 gradi non sono un preambolo strano: sono la fillotassi distica,
+        // due file opposte, che e' la disposizione delle graminacee. Lo stesso
+        // modello, cambiando un solo parametro, da' due disposizioni che
+        // esistono davvero in natura.
+        if(this.angolo !== null && this.angolo > 175) {
+            this.testo('due file opposte: è la fillotassi distica,', TESTO_X, 70, 34);
+            this.testo('quella delle graminacee.', TESTO_X, 112, 34);
+        }
         if(this.act >= 2 && this.G <= G_BASSO * 1.02) {
             this.testo('360° / φ² = ' + ANGOLO_AUREO.toFixed(1).replace('.', ',') +
                        '°', TESTO_X, 70, 46, '#ffd24d', true);
