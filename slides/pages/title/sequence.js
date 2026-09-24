@@ -107,8 +107,8 @@ class SequenceSlide extends Slide {
         let mainGroup = this.mainGroup;
 
         // La successione parte dalla definizione: F(0) = 0.
-        let fibs = [0,1];
-        for(let i=0; i<30; i++)
+        let fibs = [0,1]; window.fibs = fibs;
+        for(let i=0; i<50; i++)
             fibs.push(fibs[i]+fibs[i+1]);
 
         const textStyle = this.textStyle = {
@@ -309,6 +309,8 @@ class SequenceSlide extends Slide {
         plus.visible = equal.visible = true;
         two.update();
 
+        let t0 = tl.duration();
+
         for(let k = k0; k < k0 + m && k + 2 < txts.length; k++) {
             const a = txts[k], b = txts[k+1], nuovo = txts[k+2];
             nuovo.visible = true;
@@ -323,7 +325,7 @@ class SequenceSlide extends Slide {
             const xPlus  = computeXBetween(a, b);
             const xEqual = computeXBetween(b, nuovo);
 
-            const t0 = tl.duration();     // inizio di questo passo
+            // const t0 = tl.duration();     // inizio di questo passo
 
             // battuta 0: il + fra gli ultimi due numeri, che restano azzurri
             tl.set(plus.position, {x: xPlus}, t0);
@@ -343,7 +345,7 @@ class SequenceSlide extends Slide {
                   t0 + 3*BATTUTA + SFASAMENTO);
 
             // il numero nuovo entra nella successione: da blu ad azzurro
-            tl.to(nuovo, {duration: FADE, fill: COL_NORMALE},
+            tl.to(nuovo, {duration: 1.0, fill: COL_NORMALE},
                   t0 + 3*BATTUTA + SFASAMENTO);
 
             // Lo scorrimento: newX e' assoluto, quindi il conto resta giusto
@@ -356,7 +358,8 @@ class SequenceSlide extends Slide {
             }
 
             // il respiro prima del passo successivo
-            tl.to({}, {duration: PAUSA}, t0 + 3*BATTUTA + SFASAMENTO + FADE);
+            // tl.to({}, {duration: PAUSA}, t0 + 3*BATTUTA + SFASAMENTO + FADE - 1);
+            t0 += 1.5
         }
         return tl;
     }
