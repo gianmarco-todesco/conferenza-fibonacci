@@ -25,16 +25,22 @@ const VISTA_INIZIALE = {cx: -0.65, cy: 0, larghezza: 3.2};
 // cardioide, si scrive la frazione p/q.
 const ETICHETTA_PX = 44;
 
-// Sotto questa estensione in pixel l'antenna non si disegna: i numeri si
-// sovrapporrebbero invece di aiutare a contare.
-const ANTENNA_MIN_PX = 90;
+// I pallini numerati sulle punte. Il corpo del numero segue il raggio,
+// altrimenti un "13" non ci sta dentro.
+const ANTENNA_R      = 26;
+const ANTENNA_TESTO  = 34;
+const ANTENNA_TRATTO = 2.5;
 
-// I pallini numerati sulle punte. Vanno letti dal fondo della sala, quindi
-// sono grossi; il corpo del numero segue il raggio, altrimenti un "13" non
-// ci sta dentro.
-const ANTENNA_R      = 50;
-const ANTENNA_TESTO  = 64;
-const ANTENNA_TRATTO = 3;
+// Sotto questo raggio il pallino non si disegna: il numero dentro sarebbe
+// illeggibile e tredici pallini diventerebbero una macchia.
+//
+// La soglia sta sul raggio del pallino e non sull'estensione dell'antenna,
+// come prima, perche' e' il raggio la cosa che conta: quanto viene grande il
+// pallino dipende dalla distanza fra le due punte piu' vicine, e quella a
+// parita' di estensione cambia molto da un bulbo all'altro - le punte del
+// 5/13 sono raggruppate, quelle dell'1/3 no. Con la soglia sull'estensione la
+// stessa cifra andava bene per un bulbo e male per un altro.
+const ANTENNA_R_MIN = 9;
 
 // ---------------------------------------------------------------------
 // Geometria dei bulbi.
@@ -644,18 +650,6 @@ class MandelbrotSlide extends Slide {
             const pc = this.aSchermo(c[0], c[1]);
             if(Math.abs(pc.x) > 0.55*W || Math.abs(pc.y) > 0.55*H) return;
 
-            // E anche abbastanza grande da poterci contare sopra: a uno zoom
-            // largo l'antenna del 5/13 sta dentro l'inquadratura ma e' larga
-            // nove pixel, e tredici pallini numerati diventerebbero una
-            // macchia.
-            let raggioSchermo = 0;
-            punte.forEach(pp => {
-                const p = this.aSchermo(pp[0], pp[1]);
-                raggioSchermo = Math.max(raggioSchermo,
-                    Math.hypot(p.x - pc.x, p.y - pc.y));
-            });
-            if(raggioSchermo < ANTENNA_MIN_PX) return;
-
             // I pallini crescono FINO a ANTENNA_R, ma non oltre meta' della
             // distanza fra le due punte piu' vicine, altrimenti si
             // accavallano. Quella distanza va MISURATA, non stimata come
@@ -670,6 +664,11 @@ class MandelbrotSlide extends Slide {
                         schermo[i].x - schermo[j].x,
                         schermo[i].y - schermo[j].y));
             const rp = isFinite(minD) ? Math.min(ANTENNA_R, 0.46*minD) : ANTENNA_R;
+            // E l'antenna dev'essere abbastanza grande da poterci contare
+            // sopra: a uno zoom largo quella del 5/13 sta dentro
+            // l'inquadratura ma e' larga nove pixel, e tredici pallini
+            // numerati diventerebbero una macchia.
+            if(rp < ANTENNA_R_MIN) return;
             const corpo = Math.round(rp * ANTENNA_TESTO / ANTENNA_R);
 
             punte.forEach((pp, i) => {
