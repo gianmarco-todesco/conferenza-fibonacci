@@ -36,7 +36,13 @@ import {Slide, two, center} from '../../libs/gmtlib.js';
 // errore di conto: a G finito il punto fisso non e' esattamente 360/phi^2.
 
 const DUEPI = Math.PI * 2;
-const ANGOLO_AUREO = 360 / Math.pow((1 + Math.sqrt(5)) / 2, 2);   // 137,5078
+const PHI = (1 + Math.sqrt(5)) / 2;
+// Scritto 360/(1+phi) e non 360/phi^2, che e' lo stesso numero perche'
+// 1 + phi = phi^2 e' la definizione stessa di phi. La prima forma pero' MOSTRA
+// il significato invece di nasconderlo nel quadrato: il giro diviso in 1 + phi
+// parti, di cui l'arco piccolo ne prende una e quello grande phi. E' la forma
+// che sta sulla slide, e il codice dice la stessa cosa della slide.
+const ANGOLO_AUREO = 360 / (1 + PHI);   // 137,5078
 
 // --- il piatto sullo schermo -----------------------------------------------
 // Il piatto sta alzato e un filo stretto perche' sotto ci deve stare la
@@ -376,18 +382,15 @@ class DouadyCouderSlide extends Slide {
             this.testo('quella delle graminacee.', TESTO_X, 112, 34);
         }
         if(this.act >= 2 && this.G <= G_BASSO * 1.02) {
-            // L'angolo aureo e' quello che divide il giro in rapporto aureo:
-            // i due archi stanno fra loro come phi. Detta cosi' non serve
-            // spiegare perche' il quadrato, ne' quale dei due archi si prende.
+            // Il giro diviso in 1 + phi parti: l'arco piccolo ne prende una,
+            // quello grande phi. La forma col quadrato diceva lo stesso numero
+            // ma costringeva a spiegare da dove usciva il quadrato.
             //
-            // I decimali dell'angolo devono essere quattro. Con 137,5 il conto
-            // fa 1,618182 e non 1,618034, e in prima fila c'e' gente che lo fa
-            // sul telefono. Il rapporto si calcola dalla stessa costante, cosi'
-            // i due numeri non possono divergere.
-            const a = ANGOLO_AUREO.toFixed(4).replace('.', ',');
-            const r = ((360 - ANGOLO_AUREO)/ANGOLO_AUREO).toFixed(6).replace('.', ',');
-            this.testo('(360° − ' + a + '°) / ' + a + '° = ' + r,
-                       TESTO_X, 70, 40, '#ffd24d', true);
+            // Quattro decimali e non uno: 137,5 tondo invita a rifare il conto
+            // e a trovarlo sbagliato alla quarta cifra, e davanti a un pubblico
+            // di olimpionici quel controllo lo fa davvero qualcuno.
+            this.testo('360° / (1 + φ) = ' + ANGOLO_AUREO.toFixed(4).replace('.', ',') + '°',
+                       TESTO_X, 70, 46, '#ffd24d', true);
         }
         if(this.act >= 3) {
             this.testo('Le piante non scelgono niente.', TESTO_X, 190, 44, 'white', true);
