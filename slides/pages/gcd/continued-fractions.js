@@ -186,7 +186,7 @@ class ContinuedFractionsSlide extends Slide {
             if(n > PHI_CONVERGENTI.length) {
                 clearInterval(this.timerPhi);
                 this.timerPhi = null;
-                this.scrivi(this.divErrore, '\\text{i rapporti della slide 5}');
+                // this.scrivi(this.divErrore, '\\text{i rapporti della slide 5}');
                 return;
             }
             const profondita = Math.min(n, PHI_PROFONDITA_MAX);

@@ -1,7 +1,13 @@
 # Conferenza «Fibonacci: numeri fantastici e dove trovarli»
 
-Stato del progetto — **25 settembre 2026**. Premiazione delle olimpiadi della matematica,
-Pisa. Pubblico di studenti delle superiori, circa 50 minuti.
+**La conferenza è stata fatta** — settembre 2026, premiazione delle olimpiadi della
+matematica a Pisa, pubblico di studenti delle superiori, circa 50 minuti — **ed è andata
+bene**. Il mazzo che sta qui dentro è quello usato.
+
+Da qui in poi questo documento non serve più a ricordare cosa manca prima di andare in
+scena: serve a chi riprende il materiale. Le due parti che contano sono la mappa delle
+slide e, in fondo, le **decisioni e le trappole** — quelle sono la roba che costa
+ritrovare, e diverse sono state pagate care.
 
 ## I due documenti, e a cosa servono
 
@@ -77,9 +83,12 @@ disegnata nella scaletta — fondere le tre identità in una slide, spaccare l'a
 - L'hash dell'URL naviga a caldo: cambiando `#12` in `#17` nella barra degli indirizzi si
   va subito alla slide, e funzionano i tasti avanti/indietro del browser.
 
-## Quello che resta da fare
+## Cosa non è entrato
 
-1. **Finire la slide 25, `parastiche.js`.** Il telaio c'è: foto, overlay, modalità di
+Non sono più cose da fare prima di una scadenza: sono i buchi noti del mazzo, elencati
+perché un domani non si perda tempo a cercarli.
+
+1. **Le fasi della slide 25, `parastiche.js`.** Il telaio c'è: foto, overlay, modalità di
    regolazione con i due cerchi di riferimento, misura col clic, stampa della tabella.
    Mancano **i dati**: le fasi dei bracci, da misurare a occhio sulla foto. Vedi sotto
    perché si fa a mano.
@@ -98,7 +107,7 @@ disegnata nella scaletta — fondere le tre identità in una slide, spaccare l'a
    incollato a 0,447 = 1/√5. È il momento in cui «φ si approssima male» smette di essere
    una frase a effetto e diventa un numero. Anche la terminazione (finito ⇔ razionale) e
    «è esattamente Euclide» oggi sono a voce, non sulla slide.
-7. ~~**Douady & Couder (1992)**~~ — **fatta**: slide 25, `sunflower/douady-couder.js`.
+7. ~~**Douady & Couder (1992)**~~ — **fatta**: slide 27, `sunflower/douady-couder.js`.
    È la simulazione del modello numerico dell'articolo, non una fotografia: le foto
    hanno un copyright e questa slide si proietta in pubblico. L'apparato è disegnato
    in sezione nell'atto 0.
@@ -106,7 +115,7 @@ disegnata nella scaletta — fondere le tre identità in una slide, spaccare l'a
 ### Cose piccole, tutte vere e tutte da ripulire
 
 - `slides/assets/fibonacci.jpg` è committato e non lo usa nessuno. (`sunflower-2.png`
-  adesso lo usa la slide 20.)
+  adesso lo usa la slide 25.)
 - `console.log("act2", ...)` di debug in `tiling/tiling.js:207`.
 - `golden-ratio.js` usa il punto come separatore decimale, le slide più recenti la virgola.
 - Due commit non pushati sul repository della conferenza.
@@ -143,7 +152,7 @@ bene così.
 tecnico: a quattro è alta 535 px e va addosso alla forma chiusa. Motivo migliore: così
 l'ultima pressione non allunga la torre, toglie la φ.
 
-**Le spirali della slide 20 si posizionano a mano, e non per sbaglio.** Un girasole vero
+**Le spirali della slide 25 si posizionano a mano, e non per sbaglio.** Un girasole vero
 non ha i bracci equispaziati lungo il giro. Disegnando m copie della stessa curva ruotate
 di 2π/m, a un certo angolo cadono negli spazi fra i pistilli e novanta gradi più in là ci
 passano sopra: da lontano regge, in prima fila no. Quindi la forma della curva è condivisa
@@ -189,3 +198,49 @@ Due avvertenze prima di proiettarli. Il denominatore sono i **conteggi**, non le
 ogni girasole ne porta due, e la frazione di girasoli con *entrambi* i conteggi Fibonacci
 e' piu' bassa. E il 25 "doppio di Fibonacci" e' esattamente il caso bigiugato che era
 stato ipotizzato e poi escluso per `sunflower-2.png`: succede davvero, solo non li'.
+
+## Altre due cose sospese
+
+**`art/goldencat.js` esiste ma non è registrato in `index.html`.** È una slide finita che
+non fa parte del mazzo: o la si attiva, o si sa che sta lì.
+
+**In `continued-fractions.js` il rimando «i rapporti della slide 5» è commentato.** Con la
+rinumerazione puntava alla slide sbagliata. È il sintomo di un problema generale: **i
+rimandi per numero di slide marciscono**, perché gli indici sono posizionali. Se se ne
+rimette uno, conviene scriverlo per nome e non per numero.
+
+## Le trappole pagate, in ordine di quanto sono costate
+
+**L'angolo aureo si scrive in una lingua sola in tutto il mazzo: 360° per una frazione, e
+la frazione è 1/φ.** Cioè **222,4922°**, non 137,5078°. I due numeri sono lo *stesso*
+angolo — gli archi complementari dello stesso giro, la via lunga e la via corta, che
+sommano a 360 perché 1/φ + 1/φ² = 1 — ma averne due in giro per il mazzo obbliga a
+spiegare dal palco una differenza che non esiste. La slide 26 fa girare la manopola su
+1/3, 1/4, 3/7, 10/37, 1/π e finisce su 1/φ; la 27 misura quel numero. Il prezzo, scelto
+consapevolmente: **137,5° non compare mai**, ed è quello che trova chi cerca «angolo
+aureo» dopo la conferenza. Se lo chiedono: *360 meno 222,5, è lo stesso angolo misurato
+dall'altra parte*.
+
+Corollario, perché ha già morso una volta: **una soglia scritta assumendo che l'angolo
+stia sotto 180 si rompe con questa convenzione.** La nota sulla fillotassi distica
+scattava con `angolo > 174` e compariva sopra la didascalia dell'aureo.
+
+**`two.makePath` mette nella `translation` del tracciato il baricentro dei vertici che gli
+si passa, e li riscrive relativi a quello.** Finché i vertici non si toccano più va tutto
+bene. Ma per animare un tracciato — la slide 6 lo fa — si riscrivono coordinate assolute
+nei vertici a ogni fotogramma, e allora la curva viene disegnata spostata di quel
+baricentro: 279 px, in quel caso. Va azzerata la `translation`. Il sintomo è infido,
+perché «sale un po' presto» sembra una scelta di scala e non un errore.
+
+**I cerchi dei bulbi di Mandelbrot sono il cerchio ai minimi quadrati sul bordo vero.**
+Due tentativi sbagliati prima: il raggio come distanza radice-nucleo (il nucleo è il
+centro geometrico solo per q = 2, e il cerchio usciva fino al 6% troppo piccolo, tanto
+più quanto cresce il denominatore); poi il cerchio di diametro radice-punta, che azzecca
+la taglia ma non il centro, perché **il bulbo non è simmetrico rispetto a quell'asse**. Il
+bordo si campiona risolvendo (f^q)'(z) = e^(iθ) con Newton in (z, c), partendo ogni volta
+dal nucleo e stando lontani da θ = 0, dove il ciclo è parabolico.
+
+**Il pannello del browser, quando è nascosto, ferma `gsap.ticker`.** Le animazioni non
+avanzano, gli screenshot tornano fotogrammi vecchi, e una prova fatta a occhio racconta
+balle. Le verifiche di questo mazzo si fanno pilotando le timeline a mano
+(`tl.time(t)`, `setAct()`) e leggendo il DOM, non guardando.

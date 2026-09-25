@@ -672,6 +672,72 @@ class ASpiral extends Slide {
 
 }
 
+
+class SimpleImageSlide extends Slide {
+    constructor(path, scale=1.0) {
+        super("ImageSlide:" + path);
+        this.path = path;
+        this.scale = scale;
+    }   
+    initialize() {
+    }
+    start() {
+        let mainGroup = two.makeGroup();
+        mainGroup.position.set(center.x, center.y);
+        this.mainGroup = mainGroup; 
+        this.addImage(this.path, 0,0,this.scale);
+    }
+
+    addImage(path, x, y, scale) {
+        let sprite = two.makeSprite(path, 0, 0);
+        this.mainGroup.add(sprite);
+        sprite.scale = scale;
+        sprite.position.set(x, y);
+        // sprite.visible = false;
+        return sprite;
+    }
+
+    async end() {
+    }
+    cleanup() {
+        this.mainGroup.remove();
+    }
+}
+
+/*
+class SpiralImageSlide extends Slide {
+    constructor() {
+        super("Spiralimage");
+    }   
+    initialize() {
+    }
+    start() {
+        let mainGroup = two.makeGroup();
+        mainGroup.position.set(center.x, center.y);
+        this.mainGroup = mainGroup; 
+        this.addImage('/slides/assets/shell1.jpg', 0,0,0.75);
+    }
+
+    addImage(path, x, y, scale) {
+        let sprite = two.makeSprite(path, 0, 0);
+        this.mainGroup.add(sprite);
+        sprite.scale = scale;
+        sprite.position.set(x, y);
+        // sprite.visible = false;
+        return sprite;
+    }
+
+    async end() {
+    }
+    cleanup() {
+        this.mainGroup.remove();
+    }
+}
+*/
+
+
 let t1 = new ASpiral(true);
+let spiralImageSlide = new SimpleImageSlide('/slides/assets/shell1.jpg', 0.75);
+let catImageSlide = new SimpleImageSlide('/slides/assets/fibonacci-cat.jpg', 1.0);
 let t2 = new ASpiral(false);
 
