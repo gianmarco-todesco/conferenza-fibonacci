@@ -7,7 +7,7 @@ import {Slide, two, center} from '../../libs/gmtlib.js';
 // crederci. Questa lo fa USCIRE. Gocce di ferrofluido cadono al centro di un
 // piatto d'olio a intervalli regolari, un campo magnetico le spinge verso il
 // bordo, e ogni goccia respinge le altre. Nient'altro: niente biologia, niente
-// DNA, niente disegno. E viene fuori 137,5 gradi.
+// DNA, niente disegno. E viene fuori l'angolo aureo.
 //
 // Senza questo ponte il finale della conferenza sarebbe esattamente la mistica
 // che la conferenza passa mezz'ora a smontare: "le piante scelgono l'angolo
@@ -31,18 +31,30 @@ import {Slide, two, center} from '../../libs/gmtlib.js';
 //     il motivo per cui l'atto 2 fa scendere G da solo invece di saltare al
 //     valore giusto.
 //
-// Il punto fisso misurato scendendo fino a G = 0,02 e' 137,48 gradi, contro
-// 137,5078 dell'angolo aureo. La differenza residua e' del modello, non un
-// errore di conto: a G finito il punto fisso non e' esattamente 360/phi^2.
+// Il punto fisso misurato scendendo fino a G = 0,02 e' 222,52 gradi, contro
+// 222,4922 dell'angolo aureo. La differenza residua e' del modello, non un
+// errore di conto: a G finito il punto fisso non e' esattamente 360/phi.
 
 const DUEPI = Math.PI * 2;
 const PHI = (1 + Math.sqrt(5)) / 2;
-// Scritto 360/(1+phi) e non 360/phi^2, che e' lo stesso numero perche'
-// 1 + phi = phi^2 e' la definizione stessa di phi. La prima forma pero' MOSTRA
-// il significato invece di nasconderlo nel quadrato: il giro diviso in 1 + phi
-// parti, di cui l'arco piccolo ne prende una e quello grande phi. E' la forma
-// che sta sulla slide, e il codice dice la stessa cosa della slide.
-const ANGOLO_AUREO = 360 / (1 + PHI);   // 137,5078
+
+// LA CONVENZIONE, e perche' e' questa e non l'altra.
+//
+// 222,4922 e 137,5078 sono LO STESSO angolo: i due archi complementari dello
+// stesso giro, la via lunga e la via corta. Sommano a 360 perche'
+// 1/phi + 1/phi^2 = 1. Girare di 222,5 in un verso e' girare di 137,5
+// nell'altro, e il disegno che ne esce e' lo stesso a meno della chiralita'.
+//
+// Qui si usa la via lunga, 360/phi, perche' e' quella che parla la slide
+// precedente: sunflower1 fa girare la manopola su 360 gradi per una frazione -
+// 1/3, 1/4, 3/7, 10/37, 1/pi - e finisce su 1/phi. Tenere qui l'altro arco
+// costringerebbe a spiegare dal palco perche' la formula e' cambiata fra una
+// slide e la successiva, e non c'e' niente da spiegare: e' lo stesso angolo.
+//
+// Il prezzo, e va saputo: il numero famoso e' 137,5, ed e' quello che trova
+// chi dopo la conferenza cerca "angolo aureo". Se qualcuno lo chiede, la
+// risposta e' una riga - 360 meno 222,5.
+const ANGOLO_AUREO = 360 / PHI;   // 222,4922
 
 // --- il piatto sullo schermo -----------------------------------------------
 // Il piatto sta alzato e un filo stretto perche' sotto ci deve stare la
@@ -74,12 +86,12 @@ const MEMORIA  = 40;            // quante gocce contano nella somma
 const T_GOCCIA = 0.10;          // secondi fra una goccia e l'altra
 
 const G_ALTO  = 1.10;           // gocce rade: escono a 180 gradi
-const G_BASSO = 0.02;           // gocce fitte: 137,5
+const G_BASSO = 0.02;           // gocce fitte: l'angolo aureo
 const GOCCE_DISCESA = 80;       // in quante gocce G scende da G_ALTO a G_BASSO
 
 // IL RUMORE, e perche' porta con se' il rilassamento.
 //
-// Senza rumore la goccia cade esattamente nel minimo, il 180 e il 137,5 escono
+// Senza rumore la goccia cade esattamente nel minimo, il 180 e l'aureo escono
 // esatti alla seconda cifra e le file sono dritte come un righello: sembra
 // finto, e l'esperimento vero ha dispersione.
 //
@@ -92,7 +104,7 @@ const GOCCE_DISCESA = 80;       // in quante gocce G scende da G_ALTO a G_BASSO
 //
 // Quindi: rumore sulla caduta E rilassamento di tutte le gocce a ogni passo.
 // Con i due insieme il sistema regge fino a due gradi. A 1,5 la lettura finale
-// e' 137,65 +- 1,15 su quattro semi diversi, contro 137,5078 dell'aureo.
+// e' 222,35 +- 1,15 su quattro semi diversi, contro 222,4922 dell'aureo.
 const RUMORE_GRADI = 1.5;
 const RILASSA_GIRI = 3;
 const RILASSA_PASSO = 0.25;     // gradi per giro
@@ -162,8 +174,8 @@ class DouadyCouderSlide extends Slide {
     // L'angolo che minimizza la repulsione dalle gocce gia' presenti. Si prova
     // tutto il giro a passi fitti e poi si raffina con una parabola sui tre
     // campioni attorno al minimo: senza il raffinamento il numero sullo schermo
-    // sarebbe quantizzato a un terzo di grado, e si leggerebbe 137,0 invece di
-    // 137,5 - cioe' proprio la cifra che la slide deve far vedere.
+    // sarebbe quantizzato a un terzo di grado, e si leggerebbe 223,0 invece di
+    // 222,5 - cioe' proprio la cifra che la slide deve far vedere.
     nuovoAngolo() {
         if(this.gocce.length === 0) return 0;
         const E = new Float64Array(CAMPIONI);
@@ -233,7 +245,10 @@ class DouadyCouderSlide extends Slide {
         if(this.gocce.length > 0) {
             let d = (th - this.gocce[this.gocce.length - 1].theta) % DUEPI;
             if(d < 0) d += DUEPI;
-            this.storia.push(Math.min(d, DUEPI - d) * 180 / Math.PI);
+            // Si riporta sempre l'arco maggiore: la chiralita' che il sistema
+            // sceglie dipende dalle condizioni iniziali, e senza questo il
+            // contatore leggerebbe 222,5 o 137,5 a seconda della corsa.
+            this.storia.push(Math.max(d, DUEPI - d) * 180 / Math.PI);
             if(this.storia.length > FINESTRA) this.storia.shift();
             // Con il rumore il singolo angolo balla: quello che si proietta e'
             // una misura, media e dispersione, come si farebbe sui dati veri.
@@ -377,19 +392,20 @@ class DouadyCouderSlide extends Slide {
         // due file opposte, che e' la disposizione delle graminacee. Lo stesso
         // modello, cambiando un solo parametro, da' due disposizioni che
         // esistono davvero in natura.
-        if(this.angolo !== null && this.angolo > 174) {
+        // Vicino a 180, non sopra una soglia: con la convenzione dell'arco
+        // maggiore anche l'angolo aureo sta sopra 174, e la nota scattava
+        // sopra la didascalia dell'aureo.
+        if(this.angolo !== null && Math.abs(this.angolo - 180) < 6) {
             this.testo('due file opposte: è la fillotassi distica,', TESTO_X, 70, 34);
             this.testo('quella delle graminacee.', TESTO_X, 112, 34);
         }
         if(this.act >= 2 && this.G <= G_BASSO * 1.02) {
-            // Il giro diviso in 1 + phi parti: l'arco piccolo ne prende una,
-            // quello grande phi. La forma col quadrato diceva lo stesso numero
-            // ma costringeva a spiegare da dove usciva il quadrato.
-            //
-            // Quattro decimali e non uno: 137,5 tondo invita a rifare il conto
-            // e a trovarlo sbagliato alla quarta cifra, e davanti a un pubblico
-            // di olimpionici quel controllo lo fa davvero qualcuno.
-            this.testo('360° / (1 + φ) = ' + ANGOLO_AUREO.toFixed(4).replace('.', ',') + '°',
+            // Stessa notazione della slide precedente, che scrive
+            // alpha = 360 gradi per una frazione e finisce proprio su 1/phi.
+            // Quattro decimali e non uno: un numero tondo invita a rifare il
+            // conto e a trovarlo sbagliato, e davanti a un pubblico di
+            // olimpionici quel controllo lo fa davvero qualcuno.
+            this.testo('α = 360° · 1/φ = ' + ANGOLO_AUREO.toFixed(4).replace('.', ',') + '°',
                        TESTO_X, 70, 46, '#ffd24d', true);
         }
         if(this.act >= 3) {
