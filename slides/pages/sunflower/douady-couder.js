@@ -408,10 +408,7 @@ class DouadyCouderSlide extends Slide {
             this.testo('α = 360° · 1/φ = ' + ANGOLO_AUREO.toFixed(4).replace('.', ',') + '°',
                        TESTO_X, 70, 46, '#ffd24d', true);
         }
-        if(this.act >= 3) {
-            this.testo('Le piante non scelgono niente.', TESTO_X, 190, 44, 'white', true);
-            this.testo('Lo fa la repulsione.', TESTO_X, 250, 44, 'white', true);
-        }
+        // L'atto 3 accende le parastiche e basta: la morale la dice la voce.
     }
 
     // --- atti ---------------------------------------------------------------
