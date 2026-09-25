@@ -114,11 +114,108 @@ function centroEsatto(p, q) {
 
 // Il bulbo e' tangente al cardioide nella radice, quindi il raggio e' la
 // distanza fra centro e radice. Per 1/2 viene esattamente 0,25.
+// La punta del bulbo: il punto del bordo opposto alla radice.
+//
+// Perche' serve. Il raggio veniva preso come distanza fra la radice e il
+// NUCLEO, cioe' il parametro superattrattivo. Ma il nucleo e' il centro
+// geometrico del bulbo solo per q = 2: per q piu' grandi e' spostato verso la
+// radice, e il cerchio disegnato risultava piu' piccolo del bulbo, con lo
+// scarto che cresce col denominatore. Misurato: +3% a 3/8, +5% a 5/13, +6% a
+// 8/21. Il punto di tangenza era giusto, ed e' per questo che si vedeva il
+// cerchio staccarsi dalla forma solo zoomando.
+//
+// Il bordo di una componente iperbolica e' dove il ciclo di periodo q ha
+// moltiplicatore di modulo 1: la radice sta a moltiplicatore +1, il nucleo a
+// 0, e la punta a -1. Si parte dal nucleo e si porta lambda fino a -1 a
+// piccoli passi, risolvendo a ogni passo
+//     f^q(z) = z            z sta sul ciclo
+//     (f^q)'(z) = lambda    il ciclo ha quel moltiplicatore
+// in (z, c), con Newton in due incognite complesse.
+//
+// La derivata del prodotto si calcola come somma di prodotti sugli altri
+// fattori, e non come P per la somma di a_k/z_k: al nucleo uno degli z_k e'
+// zero, e la seconda forma dividerebbe per zero proprio nel punto di partenza.
+function puntaBulbo(p, q) {
+    const nucleo = centroEsatto(p, q);
+    const PASSI = 40;
+    let zr = 0, zi = 0, cr = nucleo.re, ci = nucleo.im;
+    const za = new Float64Array(2*q), aa = new Float64Array(2*q), bb = new Float64Array(2*q);
+
+    for(let s = 1; s <= PASSI; s++) {
+        const lr = -s / PASSI;                  // lambda: reale, da 0 a -1
+        for(let it = 0; it < 30; it++) {
+            let xr = zr, xi = zi, ar = 1, ai = 0, br = 0, bi = 0;
+            for(let k = 0; k < q; k++) {
+                za[2*k] = xr;  za[2*k+1] = xi;
+                aa[2*k] = ar;  aa[2*k+1] = ai;
+                bb[2*k] = br;  bb[2*k+1] = bi;
+                const nar = 2*(xr*ar - xi*ai),     nai = 2*(xr*ai + xi*ar);
+                const nbr = 2*(xr*br - xi*bi) + 1, nbi = 2*(xr*bi + xi*br);
+                const nxr = xr*xr - xi*xi + cr,    nxi = 2*xr*xi + ci;
+                ar = nar; ai = nai; br = nbr; bi = nbi; xr = nxr; xi = nxi;
+            }
+            // P = prodotto dei 2*z_k, e le sue derivate
+            let pr = 1, pi = 0;
+            for(let k = 0; k < q; k++) {
+                const ur = 2*za[2*k], ui = 2*za[2*k+1];
+                const t = pr*ur - pi*ui; pi = pr*ui + pi*ur; pr = t;
+            }
+            let dpzr = 0, dpzi = 0, dpcr = 0, dpci = 0;
+            for(let j = 0; j < q; j++) {
+                let qr = 1, qi = 0;                        // prodotto senza j
+                for(let k = 0; k < q; k++) {
+                    if(k === j) continue;
+                    const ur = 2*za[2*k], ui = 2*za[2*k+1];
+                    const t = qr*ur - qi*ui; qi = qr*ui + qi*ur; qr = t;
+                }
+                const a2r = 2*aa[2*j], a2i = 2*aa[2*j+1];
+                const b2r = 2*bb[2*j], b2i = 2*bb[2*j+1];
+                dpzr += a2r*qr - a2i*qi;  dpzi += a2r*qi + a2i*qr;
+                dpcr += b2r*qr - b2i*qi;  dpci += b2r*qi + b2i*qr;
+            }
+            // sistema 2x2 complesso: [A B; C D] [dz; dc] = -[G1; G2]
+            const g1r = xr - zr, g1i = xi - zi;
+            const g2r = pr - lr, g2i = pi;
+            if(Math.hypot(g1r, g1i) < 1e-14 && Math.hypot(g2r, g2i) < 1e-14) break;
+            const Ar = ar - 1, Ai = ai, Br = br, Bi = bi;
+            const Cr = dpzr, Ci = dpzi, Dr = dpcr, Di = dpci;
+            const detr = Ar*Dr - Ai*Di - (Br*Cr - Bi*Ci);
+            const deti = Ar*Di + Ai*Dr - (Br*Ci + Bi*Cr);
+            const den = detr*detr + deti*deti;
+            if(!(den > 0)) return null;
+            // dz = (-G1*D + G2*B)/det ,  dc = (-G2*A + G1*C)/det
+            const n1r = -(g1r*Dr - g1i*Di) + (g2r*Br - g2i*Bi);
+            const n1i = -(g1r*Di + g1i*Dr) + (g2r*Bi + g2i*Br);
+            const n2r = -(g2r*Ar - g2i*Ai) + (g1r*Cr - g1i*Ci);
+            const n2i = -(g2r*Ai + g2i*Ar) + (g1r*Ci + g1i*Cr);
+            zr += (n1r*detr + n1i*deti)/den;  zi += (n1i*detr - n1r*deti)/den;
+            cr += (n2r*detr + n2i*deti)/den;  ci += (n2i*detr - n2r*deti)/den;
+            if(!isFinite(cr) || !isFinite(ci)) return null;
+        }
+    }
+    return {re: cr, im: ci};
+}
+
 function geometriaBulbo(p, q) {
     const tangenza = puntoCardioide(p/q);
     const normale = normaleUscente(p/q);
-    const centro = centroEsatto(p, q);
-    const raggio = Math.hypot(centro.re - tangenza.re, centro.im - tangenza.im);
+    const nucleo = centroEsatto(p, q);
+    const punta = puntaBulbo(p, q);
+
+    let centro = nucleo;
+    let raggio = Math.hypot(nucleo.re - tangenza.re, nucleo.im - tangenza.im);
+    if(punta) {
+        const r = Math.hypot(punta.re - tangenza.re, punta.im - tangenza.im) / 2;
+        // rete: se la continuazione e' scappata su un'altra componente il
+        // raggio viene assurdo, e si torna alla stima col nucleo invece di
+        // disegnare un cerchio sbagliato senza dirlo
+        if(isFinite(r) && r > 0.3*raggio && r < 3*raggio) {
+            raggio = r;
+            centro = {re: (tangenza.re + punta.re)/2, im: (tangenza.im + punta.im)/2};
+        } else {
+            console.warn('bulbo ' + p + '/' + q + ': continuazione fallita, uso il nucleo');
+        }
+    }
     return {p, q, tangenza, normale, centro, raggio};
 }
 
