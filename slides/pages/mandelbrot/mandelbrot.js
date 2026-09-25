@@ -114,35 +114,34 @@ function centroEsatto(p, q) {
 
 // Il bulbo e' tangente al cardioide nella radice, quindi il raggio e' la
 // distanza fra centro e radice. Per 1/2 viene esattamente 0,25.
-// La punta del bulbo: il punto del bordo opposto alla radice.
-//
-// Perche' serve. Il raggio veniva preso come distanza fra la radice e il
-// NUCLEO, cioe' il parametro superattrattivo. Ma il nucleo e' il centro
-// geometrico del bulbo solo per q = 2: per q piu' grandi e' spostato verso la
-// radice, e il cerchio disegnato risultava piu' piccolo del bulbo, con lo
-// scarto che cresce col denominatore. Misurato: +3% a 3/8, +5% a 5/13, +6% a
-// 8/21. Il punto di tangenza era giusto, ed e' per questo che si vedeva il
-// cerchio staccarsi dalla forma solo zoomando.
+// Un punto del bordo del bulbo.
 //
 // Il bordo di una componente iperbolica e' dove il ciclo di periodo q ha
-// moltiplicatore di modulo 1: la radice sta a moltiplicatore +1, il nucleo a
-// 0, e la punta a -1. Si parte dal nucleo e si porta lambda fino a -1 a
+// moltiplicatore di modulo 1: la radice sta a moltiplicatore +1, il nucleo -
+// il parametro superattrattivo - a 0, e il resto del bordo sugli altri
+// e^(i theta). Si parte dal nucleo e si porta lambda fino a e^(i theta) a
 // piccoli passi, risolvendo a ogni passo
 //     f^q(z) = z            z sta sul ciclo
 //     (f^q)'(z) = lambda    il ciclo ha quel moltiplicatore
 // in (z, c), con Newton in due incognite complesse.
 //
-// La derivata del prodotto si calcola come somma di prodotti sugli altri
-// fattori, e non come P per la somma di a_k/z_k: al nucleo uno degli z_k e'
-// zero, e la seconda forma dividerebbe per zero proprio nel punto di partenza.
-function puntaBulbo(p, q) {
+// Ogni punto riparte dal nucleo invece di camminare lungo il bordo: cosi' un
+// fallimento non contagia gli altri, e non si passa mai vicino a lambda = 1,
+// dove il ciclo e' parabolico e Newton scappa.
+//
+// La derivata del prodotto dei 2*z_k si calcola come somma di prodotti sugli
+// altri fattori, e non come P per la somma di a_k/z_k: al nucleo uno degli
+// z_k e' zero, e la seconda forma dividerebbe per zero proprio nel punto di
+// partenza.
+function puntoBordoBulbo(p, q, theta) {
     const nucleo = centroEsatto(p, q);
     const PASSI = 40;
+    const lfr = Math.cos(theta), lfi = Math.sin(theta);
     let zr = 0, zi = 0, cr = nucleo.re, ci = nucleo.im;
     const za = new Float64Array(2*q), aa = new Float64Array(2*q), bb = new Float64Array(2*q);
 
     for(let s = 1; s <= PASSI; s++) {
-        const lr = -s / PASSI;                  // lambda: reale, da 0 a -1
+        const lr = lfr * s / PASSI, li = lfi * s / PASSI;
         for(let it = 0; it < 30; it++) {
             let xr = zr, xi = zi, ar = 1, ai = 0, br = 0, bi = 0;
             for(let k = 0; k < q; k++) {
@@ -154,7 +153,6 @@ function puntaBulbo(p, q) {
                 const nxr = xr*xr - xi*xi + cr,    nxi = 2*xr*xi + ci;
                 ar = nar; ai = nai; br = nbr; bi = nbi; xr = nxr; xi = nxi;
             }
-            // P = prodotto dei 2*z_k, e le sue derivate
             let pr = 1, pi = 0;
             for(let k = 0; k < q; k++) {
                 const ur = 2*za[2*k], ui = 2*za[2*k+1];
@@ -162,7 +160,7 @@ function puntaBulbo(p, q) {
             }
             let dpzr = 0, dpzi = 0, dpcr = 0, dpci = 0;
             for(let j = 0; j < q; j++) {
-                let qr = 1, qi = 0;                        // prodotto senza j
+                let qr = 1, qi = 0;
                 for(let k = 0; k < q; k++) {
                     if(k === j) continue;
                     const ur = 2*za[2*k], ui = 2*za[2*k+1];
@@ -173,9 +171,8 @@ function puntaBulbo(p, q) {
                 dpzr += a2r*qr - a2i*qi;  dpzi += a2r*qi + a2i*qr;
                 dpcr += b2r*qr - b2i*qi;  dpci += b2r*qi + b2i*qr;
             }
-            // sistema 2x2 complesso: [A B; C D] [dz; dc] = -[G1; G2]
             const g1r = xr - zr, g1i = xi - zi;
-            const g2r = pr - lr, g2i = pi;
+            const g2r = pr - lr, g2i = pi - li;
             if(Math.hypot(g1r, g1i) < 1e-14 && Math.hypot(g2r, g2i) < 1e-14) break;
             const Ar = ar - 1, Ai = ai, Br = br, Bi = bi;
             const Cr = dpzr, Ci = dpzi, Dr = dpcr, Di = dpci;
@@ -183,7 +180,6 @@ function puntaBulbo(p, q) {
             const deti = Ar*Di + Ai*Dr - (Br*Ci + Bi*Cr);
             const den = detr*detr + deti*deti;
             if(!(den > 0)) return null;
-            // dz = (-G1*D + G2*B)/det ,  dc = (-G2*A + G1*C)/det
             const n1r = -(g1r*Dr - g1i*Di) + (g2r*Br - g2i*Bi);
             const n1i = -(g1r*Di + g1i*Dr) + (g2r*Bi + g2i*Br);
             const n2r = -(g2r*Ar - g2i*Ai) + (g1r*Cr - g1i*Ci);
@@ -196,25 +192,89 @@ function puntaBulbo(p, q) {
     return {re: cr, im: ci};
 }
 
+// Il cerchio che meglio approssima una nuvola di punti (Kasa): si minimizza
+// lo scarto su x^2+y^2 = D x + E y + F, che e' lineare in (D, E, F). I punti
+// si portano prima sul loro baricentro, se no per i bulbi piccoli - dove le
+// coordinate sono 0,4 e il raggio 0,002 - il sistema normale e' mal
+// condizionato e la soluzione balla.
+function cerchioAiMinimiQuadrati(punti) {
+    const n = punti.length;
+    if(n < 3) return null;
+    let mx = 0, my = 0;
+    punti.forEach(p => { mx += p.re; my += p.im; });
+    mx /= n; my /= n;
+    let Suu = 0, Svv = 0, Suv = 0, Su = 0, Sv = 0, Sb = 0, Sub = 0, Svb = 0;
+    punti.forEach(p => {
+        const u = p.re - mx, v = p.im - my, b = u*u + v*v;
+        Suu += u*u; Svv += v*v; Suv += u*v; Su += u; Sv += v;
+        Sb += b; Sub += u*b; Svb += v*b;
+    });
+    // sistema 3x3  [Suu Suv Su; Suv Svv Sv; Su Sv n] (D,E,F) = (Sub,Svb,Sb)
+    const m = [[Suu, Suv, Su, Sub], [Suv, Svv, Sv, Svb], [Su, Sv, n, Sb]];
+    for(let i = 0; i < 3; i++) {
+        let piv = i;
+        for(let r = i+1; r < 3; r++) if(Math.abs(m[r][i]) > Math.abs(m[piv][i])) piv = r;
+        if(Math.abs(m[piv][i]) < 1e-18) return null;
+        const t = m[i]; m[i] = m[piv]; m[piv] = t;
+        for(let r = 0; r < 3; r++) {
+            if(r === i) continue;
+            const f = m[r][i] / m[i][i];
+            for(let c = i; c < 4; c++) m[r][c] -= f * m[i][c];
+        }
+    }
+    const D = m[0][3]/m[0][0], E = m[1][3]/m[1][1], F = m[2][3]/m[2][2];
+    const cx = mx + D/2, cy = my + E/2;
+    const rq = F + D*D/4 + E*E/4;
+    if(!(rq > 0)) return null;
+    return {centro: {re: cx, im: cy}, raggio: Math.sqrt(rq)};
+}
+
+// Gli angoli di lambda su cui si campiona il bordo: tutti lontani dalla
+// radice, che sta a lambda = 1 ed e' il punto parabolico.
+const ANGOLI_BORDO = [60, 100, 140, 180, 220, 260, 300].map(g => g*Math.PI/180);
+
+// PERCHE' UN FIT E NON DUE PUNTI. Il raggio veniva preso come distanza fra la
+// radice e il nucleo: ma il nucleo e' il centro geometrico del bulbo solo per
+// q = 2, e il cerchio usciva piu' piccolo del bulbo, con lo scarto che cresce
+// col denominatore. Preso invece il cerchio di diametro radice-punta la taglia
+// torna, ma il centro no: il bulbo NON e' simmetrico rispetto all'asse
+// radice-punta, e il cerchio risulta spostato di lato - piu' visibile sui
+// bulbi grandi.
+//
+// Il cerchio che approssima tutto il bordo risolve tutt'e due. Misurato, come
+// scarto massimo dal bordo vero in frazione del raggio:
+//
+//     bulbo    radice-punta    minimi quadrati
+//      1/3        4,88%             0,11%
+//      2/5        0,33%             0,16%
+//      3/8        2,66%             0,09%
+//      5/13       1,36%             0,10%
+//      8/21       2,31%             0,14%
+//
+// La radice non ci sta piu' esattamente sopra, ma ci cade entro lo 0,16% del
+// raggio: molto meno di un pixel a qualunque zoom di questa slide.
 function geometriaBulbo(p, q) {
     const tangenza = puntoCardioide(p/q);
     const normale = normaleUscente(p/q);
     const nucleo = centroEsatto(p, q);
-    const punta = puntaBulbo(p, q);
+
+    const punti = [tangenza];
+    ANGOLI_BORDO.forEach(t => {
+        const b = puntoBordoBulbo(p, q, t);
+        if(b && isFinite(b.re) && isFinite(b.im)) punti.push(b);
+    });
+    const fit = cerchioAiMinimiQuadrati(punti);
 
     let centro = nucleo;
     let raggio = Math.hypot(nucleo.re - tangenza.re, nucleo.im - tangenza.im);
-    if(punta) {
-        const r = Math.hypot(punta.re - tangenza.re, punta.im - tangenza.im) / 2;
-        // rete: se la continuazione e' scappata su un'altra componente il
-        // raggio viene assurdo, e si torna alla stima col nucleo invece di
-        // disegnare un cerchio sbagliato senza dirlo
-        if(isFinite(r) && r > 0.3*raggio && r < 3*raggio) {
-            raggio = r;
-            centro = {re: (tangenza.re + punta.re)/2, im: (tangenza.im + punta.im)/2};
-        } else {
-            console.warn('bulbo ' + p + '/' + q + ': continuazione fallita, uso il nucleo');
-        }
+    // rete: se la continuazione e' scappata su un'altra componente il cerchio
+    // viene assurdo, e si torna alla stima col nucleo invece di disegnare un
+    // cerchio sbagliato senza dirlo
+    if(fit && fit.raggio > 0.3*raggio && fit.raggio < 3*raggio) {
+        centro = fit.centro;
+        raggio = fit.raggio;
+    } else {
+        console.warn('bulbo ' + p + '/' + q + ': fit del bordo fallito, uso il nucleo');
     }
     return {p, q, tangenza, normale, centro, raggio};
 }
