@@ -71,6 +71,28 @@ const G_ALTO  = 1.10;           // gocce rade: escono a 180 gradi
 const G_BASSO = 0.02;           // gocce fitte: 137,5
 const GOCCE_DISCESA = 80;       // in quante gocce G scende da G_ALTO a G_BASSO
 
+// IL RUMORE, e perche' porta con se' il rilassamento.
+//
+// Senza rumore la goccia cade esattamente nel minimo, il 180 e il 137,5 escono
+// esatti alla seconda cifra e le file sono dritte come un righello: sembra
+// finto, e l'esperimento vero ha dispersione.
+//
+// Ma il rumore da solo distrugge tutto: misurato, a mezzo grado il sistema
+// regge e a un grado perde il ramo e finisce a vagare. Il motivo e' una
+// mancanza del modello, non del rumore - una volta piazzata, la goccia qui
+// resta congelata per sempre, quindi gli errori si accumulano lungo la catena
+// invece di correggersi. Nel piatto vero le gocce continuano a respingersi
+// dopo essere cadute e il reticolo si riassesta.
+//
+// Quindi: rumore sulla caduta E rilassamento di tutte le gocce a ogni passo.
+// Con i due insieme il sistema regge fino a due gradi. A 1,5 la lettura finale
+// e' 137,65 +- 1,15 su quattro semi diversi, contro 137,5078 dell'aureo.
+const RUMORE_GRADI = 1.5;
+const RILASSA_GIRI = 3;
+const RILASSA_PASSO = 0.25;     // gradi per giro
+const SEME = 20250925;          // fisso: la prova generale e' la replica
+const FINESTRA = 25;            // su quante gocce si media la lettura
+
 const COL_GOCCIA = '#ffb03a';
 const COL_SPIRALE_A = '#ff5a5a';
 const COL_SPIRALE_B = '#5ad2ff';
@@ -79,6 +101,18 @@ const COL_SPIRALE_B = '#5ad2ff';
 const FAMIGLIE = [5, 8];
 
 const TESTO_X = 60;
+
+// Generatore riproducibile: con un seme fisso la corsa e' sempre la stessa, e
+// quello che si vede alla prova generale e' quello che si vede in sala.
+function generatore(seme) {
+    let s = seme >>> 0;
+    return function() {
+        s = (s + 0x6D2B79F5) >>> 0;
+        let t = Math.imul(s ^ (s >>> 15), 1 | s);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
 
 class DouadyCouderSlide extends Slide {
     constructor() { super("DouadyCouder"); }
@@ -111,7 +145,10 @@ class DouadyCouderSlide extends Slide {
         this.frazione = 0;
         this.G = G_ALTO;
         this.discesa = false;
-        this.angolo = null;         // ultimo angolo di divergenza misurato
+        this.angolo = null;         // media degli ultimi angoli di divergenza
+        this.dispersione = 0;
+        this.storia = [];
+        this.caso = generatore(SEME);
         this.girando = false;
     }
 
@@ -147,18 +184,64 @@ class DouadyCouderSlide extends Slide {
         return ((j + d) * da) % DUEPI;
     }
 
+    // Gauss da due uniformi: serve solo qui, non vale la pena di piu'.
+    gauss() {
+        const u = Math.max(this.caso(), 1e-12), v = this.caso();
+        return Math.sqrt(-2*Math.log(u)) * Math.cos(DUEPI*v);
+    }
+
+    // Le gocce gia' cadute si riassestano: ognuna scivola di un passo fisso
+    // verso il basso dell'energia. E' quello che fanno nel piatto, ed e' cio'
+    // che permette al reticolo di assorbire il rumore invece di sfasciarsi.
+    rilassa() {
+        const n = this.gocce.length;
+        if(n < 2) return;
+        const R = new Float64Array(n), T = new Float64Array(n);
+        for(let i = 0; i < n; i++) {
+            R[i] = Math.exp(this.G * (this.passo - this.gocce[i].nato));
+            T[i] = this.gocce[i].theta;
+        }
+        const passo = RILASSA_PASSO * Math.PI / 180;
+        const g = new Float64Array(n);
+        for(let giro = 0; giro < RILASSA_GIRI; giro++) {
+            for(let i = 0; i < n; i++) {
+                let gi = 0;
+                for(let j = 0; j < n; j++) {
+                    if(i === j) continue;
+                    const dif = T[i] - T[j];
+                    const d2 = R[i]*R[i] + R[j]*R[j] - 2*R[i]*R[j]*Math.cos(dif);
+                    if(!(d2 > 1e-12)) continue;
+                    // -K * r_i r_j sin(dif) / d2^(K/2+1), con K = 3
+                    gi -= 3 * R[i] * R[j] * Math.sin(dif) / (d2 * d2 * Math.sqrt(d2));
+                }
+                g[i] = gi;
+            }
+            for(let i = 0; i < n; i++) T[i] -= passo * Math.sign(g[i]);
+        }
+        for(let i = 0; i < n; i++) this.gocce[i].theta = T[i];
+    }
+
     passoSimulazione() {
-        const th = this.nuovoAngolo();
+        let th = this.nuovoAngolo();
+        if(this.rumore !== false) th += (RUMORE_GRADI * Math.PI / 180) * this.gauss();
         if(this.gocce.length > 0) {
             let d = (th - this.gocce[this.gocce.length - 1].theta) % DUEPI;
             if(d < 0) d += DUEPI;
-            this.angolo = Math.min(d, DUEPI - d) * 180 / Math.PI;
+            this.storia.push(Math.min(d, DUEPI - d) * 180 / Math.PI);
+            if(this.storia.length > FINESTRA) this.storia.shift();
+            // Con il rumore il singolo angolo balla: quello che si proietta e'
+            // una misura, media e dispersione, come si farebbe sui dati veri.
+            const m = this.storia.reduce((a, b) => a + b, 0) / this.storia.length;
+            this.angolo = m;
+            this.dispersione = Math.sqrt(
+                this.storia.reduce((a, b) => a + (b - m) * (b - m), 0) / this.storia.length);
         }
         this.gocce.push({nato: this.passo, theta: th});
         this.passo++;
         const eMax = this.etaMax();
         while(this.gocce.length && this.passo - this.gocce[0].nato > eMax)
             this.gocce.shift();
+        if(this.rumore !== false) this.rilassa();
 
         // La discesa di G e' geometrica e lenta: saltare a un G piccolo fa
         // cadere il sistema su un altro ramo (vedi il commento in testa).
@@ -265,10 +348,18 @@ class DouadyCouderSlide extends Slide {
     }
 
     disegnaLettura() {
-        this.testo('angolo fra una goccia e la successiva', TESTO_X, -300, 34);
+        this.testo('angolo fra una goccia e la successiva', TESTO_X, -340, 34);
+        this.testo('media sulle ultime ' + FINESTRA + ' gocce', TESTO_X, -300, 28,
+                   'rgba(255,255,255,0.6)');
         const a = this.angolo === null ? '—' :
                   this.angolo.toFixed(1).replace('.', ',') + '°';
-        this.testo(a, TESTO_X, -180, 150, '#ffd24d', true);
+        const n = this.testo(a, TESTO_X, -190, 150, '#ffd24d', true);
+        if(this.angolo !== null && this.rumore !== false) {
+            // Con il rumore quello che si proietta e' una misura, non un
+            // valore: senza la dispersione accanto sarebbe una cifra finta.
+            this.testo('± ' + this.dispersione.toFixed(1).replace('.', ',') + '°',
+                       TESTO_X + 545, -150, 54, '#ffd24d');
+        }
 
         this.testo('G = ' + this.G.toFixed(3).replace('.', ',') +
                    (this.discesa && this.G > G_BASSO ? '   (scende)' : ''),
@@ -280,7 +371,7 @@ class DouadyCouderSlide extends Slide {
         // due file opposte, che e' la disposizione delle graminacee. Lo stesso
         // modello, cambiando un solo parametro, da' due disposizioni che
         // esistono davvero in natura.
-        if(this.angolo !== null && this.angolo > 175) {
+        if(this.angolo !== null && this.angolo > 174) {
             this.testo('due file opposte: è la fillotassi distica,', TESTO_X, 70, 34);
             this.testo('quella delle graminacee.', TESTO_X, 112, 34);
         }
@@ -317,6 +408,9 @@ class DouadyCouderSlide extends Slide {
         if(k === 'q') { this.G = Math.min(G_ALTO, this.G * 1.12); this.ridisegna(); }
         if(k === 'w') { this.G = Math.max(0.005, this.G * 0.89); this.ridisegna(); }
         if(k === 'r') { this.reset(); this.girando = this.act > 0; this.ridisegna(); }
+        // Il rumore si puo' spegnere: serve alla prova generale per vedere che
+        // il punto fisso e' lo stesso, e non un effetto del rumore.
+        if(k === 'n') { this.rumore = this.rumore === false; this.ridisegna(); }
     }
 
     cleanup() { this.girando = false; }
