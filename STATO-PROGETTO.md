@@ -1,6 +1,6 @@
 # Conferenza «Fibonacci: numeri fantastici e dove trovarli»
 
-Stato del progetto — **24 settembre 2026**. Premiazione delle olimpiadi della matematica,
+Stato del progetto — **25 settembre 2026**. Premiazione delle olimpiadi della matematica,
 Pisa. Pubblico di studenti delle superiori, circa 50 minuti.
 
 ## I due documenti, e a cosa servono
@@ -24,34 +24,41 @@ Nessun build: `slides/index.html` carica i moduli ES uno per uno, e **l'ordine d
 `<script>` è l'ordine delle slide**. Ogni modulo si registra da solo costruendo l'oggetto
 `Slide` in fondo al file.
 
-⚠️ **Gli indici sono posizionali e si spostano appena si tocca `index.html`.** Due file
-registrano *due* slide a testa: `rabbits.js` (conigli + mitosi) e `spiral.js`. Prima di
-scrivere un numero di slide da qualche parte, ricontarlo.
+⚠️ **Gli indici sono posizionali e si spostano appena si tocca `index.html`.** Più file
+registrano più di una slide a testa: `rabbits.js` ne fa due, `spiral.js` quattro. La
+tabella qui sotto invecchia a ogni aggiunta, e non va ricontata a mano: si rifa' con
+
+```bash
+python tools/indice-slide.py
+```
 
 | # | slide | file | stato |
 |---|---|---|---|
 | 0 | Titolo | `title/title.js` | attivata, mai guardata |
-| 1 | Sequence | `title/sequence.js` | **rifatta**: definizione → semi → animazione → ritratto + Liber Abaci |
-| 2 | Pingala | `title/pingala.js` | **nuova** |
+| 1 | Sequence | `title/sequence.js` | rifatta: definizione -> semi -> animazione -> ritratto + Liber Abaci |
+| 2 | Pingala | `title/pingala.js` | nuova |
 | 3 | Tiling | `tiling/tiling.js` | non rivista |
-| 4–5 | conigli + mitosi | `rabbits/rabbits.js` | non rivista |
-| 6 | GoldenRatio | `golden-ratio/golden-ratio.js` | **rifatta** |
-| 7 | Arte | `art/art.js` | non rivista |
-| 8 | FibonacciSum | `identities/fibonacci-sum.js` | non rivista |
-| 9 | FibonacciSumTiling | `identities/fibonacci-sum-tiling.js` | **nuova** |
-| 10 | TwoSquaresSum | `identities/sum-of-two-squares.js` | non rivista |
-| 11 | TwoSquaresTiling | `identities/sum-of-two-squares-tiling.js` | **nuova** |
-| 12 | SumOfSquares | `identities/sum-of-squares.js` | non rivista |
-| 13–14 | spirale × 2 | `spiral/spiral.js` | non rivista |
-| 15–17 | gcd × 3 | `gcd/gcdintro.js`, `gcd.js`, `slowgcd.js` | non rivista |
-| 18 | ContinuedFractions | `gcd/continued-fractions.js` | **nuova** |
-| 19 | Mandelbrot | `mandelbrot/mandelbrot.js` | **riscritto da zero**, antenne complete |
-| 20 | plants | `sunflower/plants.js` | attivata, mai guardata |
-| 21 | Parastiche | `sunflower/parastiche.js` | **nuova**: le spirali sulla foto, fasi da misurare a mano |
-| 22–24 | girasoli × 3 | `sunflower/sunflower1-3.js` | attivate in `index.html`, **mai guardate** |
-| 25 | DouadyCouder | `sunflower/douady-couder.js` | **nuova**: l'angolo aureo che emerge dalla repulsione |
+| 4-5 | conigli + mitosi | `rabbits/rabbits.js` | non rivista |
+| 6 | Crescite | `rabbits/crescite.js` | **nuova**: F(n) e 2^n a confronto |
+| 7 | GoldenRatio | `golden-ratio/golden-ratio.js` | rifatta |
+| 8 | Arte | `art/art.js` | non rivista |
+| 9 | Myth | `art/myth.js` | nuova (gli strafalcioni) |
+| 10 | FibonacciSum | `identities/fibonacci-sum.js` | non rivista |
+| 11 | FibonacciSumTiling | `identities/fibonacci-sum-tiling.js` | nuova |
+| 12 | TwoSquaresSum | `identities/sum-of-two-squares.js` | non rivista |
+| 13 | TwoSquaresTiling | `identities/sum-of-two-squares-tiling.js` | nuova |
+| 14 | SumOfSquares | `identities/sum-of-squares.js` | non rivista |
+| 15-18 | spirale x2 + due immagini | `spiral/spiral.js` | la conchiglia e il gatto |
+| 19 | Mandelbrot | `mandelbrot/mandelbrot.js` | riscritto da zero; cerchi dei bulbi e antenne sistemati |
+| 20-22 | gcd x3 | `gcd/gcdintro.js`, `gcd.js`, `slowgcd.js` | non rivista |
+| 23 | ContinuedFractions | `gcd/continued-fractions.js` | nuova |
+| 24 | plants | `sunflower/plants.js` | attivata, mai guardata |
+| 25 | Parastiche | `sunflower/parastiche.js` | **nuova**: le spirali sulla foto, fasi da mettere a mano |
+| 26 | SunFlower1 | `sunflower/sunflower1.js` | mai guardata |
+| 27 | DouadyCouder | `sunflower/douady-couder.js` | **nuova**: l'angolo aureo che emerge dalla repulsione |
+| 28-29 | girasoli x2 | `sunflower/sunflower2.js`, `sunflower3.js` | mai guardate |
 
-**26 slide contro le 16 della scaletta.** Non è un errore di conto: la riorganizzazione
+**30 slide contro le 16 della scaletta.** Non è un errore di conto: la riorganizzazione
 disegnata nella scaletta — fondere le tre identità in una slide, spaccare l'arte in
 «deliberato / retrodatato», spostare Binet e Cassini — **non è mai stata applicata a
 `index.html`**. Il mazzo ha ancora la struttura vecchia, con dentro le slide nuove.
@@ -72,15 +79,15 @@ disegnata nella scaletta — fondere le tre identità in una slide, spaccare l'a
 
 ## Quello che resta da fare
 
-1. **Finire la slide 20, `parastiche.js`.** Il telaio c'è: foto, overlay, modalità di
+1. **Finire la slide 25, `parastiche.js`.** Il telaio c'è: foto, overlay, modalità di
    regolazione con i due cerchi di riferimento, misura col clic, stampa della tabella.
    Mancano **i dati**: le fasi dei bracci, da misurare a occhio sulla foto. Vedi sotto
    perché si fa a mano.
-2. **Le quattro slide del girasole (19, 21–23)**: attivate ma mai aperte.
-3. **La seconda slide dell'arte — gli strafalcioni.** Accanto a quella su Fibonacci
+2. **Le slide del girasole (24, 26, 28–29)**: attivate ma mai aperte.
+3. ~~**La seconda slide dell'arte — gli strafalcioni.**~~ fatta: `art/myth.js`, slide 9. Il resto della voce: Accanto a quella su Fibonacci
    nell'arte: la prima i casi deliberati (Merz, i cubi pisani), la seconda i retrodatati
    (Partenone, Gioconda, proporzioni del corpo umano).
-4. **La conchiglia dopo la spirale.** Non come illustrazione ma come smentita — vedi sotto
+4. ~~**La conchiglia dopo la spirale.**~~ fatta: sta in `spiral.js`, slide 15–18. Il numero da usare: Non come illustrazione ma come smentita — vedi sotto
    il numero giusto, che nella scaletta era sbagliato.
 5. **Binet e Cassini, mai spostati.** Deciso e mai fatto: Binet va attaccato alla slide di
    φ, Cassini più il paradosso della dissezione vanno come finale della slide delle
@@ -165,3 +172,20 @@ afferma: il punto fisso a G = 0,02 è **137,47° ± 0,01** contro i 137,5078° d
 aureo (la differenza residua è del modello: a G finito il punto fisso non è esattamente
 360/φ²), e **non dipende dai dettagli della repulsione** — con esponente 3 e con esponente
 6 coincide entro 0,05°. Se dipendesse, la risposta l'avremmo scelta noi.
+
+**Quanto spesso le spirali del girasole sono davvero Fibonacci: la cifra c'e'.** Era una
+voce da verificare, ed e' verificata sull'articolo. Swinton, Ochu et al., *Novel Fibonacci
+and non-Fibonacci structure in the sunflower: results of a citizen science experiment*,
+Royal Society Open Science 3:160091 (2016), dal censimento del Manchester Science Festival:
+
+- **657 girasoli** raccolti;
+- nel sottoinsieme piu' affidabile, **768 conteggi** di parastiche (orarie o antiorarie);
+- **565 erano numeri di Fibonacci**, cioe' il **74%**;
+- altri **67** avevano una struttura affine gia' prevista: **41 Lucas**, **25 doppi di
+  Fibonacci**, **1** della successione F4. Con quelli si arriva a **632 su 768, l'82%**;
+- quindi **circa un conteggio su sei, il 18%, non ha nessuna di queste strutture**.
+
+Due avvertenze prima di proiettarli. Il denominatore sono i **conteggi**, non le piante:
+ogni girasole ne porta due, e la frazione di girasoli con *entrambi* i conteggi Fibonacci
+e' piu' bassa. E il 25 "doppio di Fibonacci" e' esattamente il caso bigiugato che era
+stato ipotizzato e poi escluso per `sunflower-2.png`: succede davvero, solo non li'.
